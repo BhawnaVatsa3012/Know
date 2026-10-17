@@ -1,0 +1,7 @@
+{
+  "name": "iknow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "IKnOw: a private diary that writes back.",
+  "engines": { "node": ">=20" }
+}
