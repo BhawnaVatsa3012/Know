@@ -79,7 +79,7 @@ module.exports = async function handler(req, res) {
       else if (/credit balance|billing/i.test(errMsg)) code = "no_credit";
       else if (r.status === 404 || errType === "not_found_error" || /model/i.test(errMsg)) code = "bad_model";
       else if (r.status === 529 || errType === "overloaded_error") code = "busy";
-      console.error("anthropic_error", JSON.stringify({ status: r.status, type: errType, code, model }));
+      console.error("anthropic_error", JSON.stringify({ status: r.status, type: errType, code, model, reason: errMsg.replace(/\s+/g, " ").slice(0, 300) }));
       res.status(502).json({ code, status: r.status });
       return;
     }
