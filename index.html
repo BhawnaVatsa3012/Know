@@ -1045,6 +1045,7 @@ if(window.IKNOW_STANDALONE){
     e_bad_model:"Replies aren't working: the reply model isn't available to this API key. The app owner needs to check the model setting in Vercel.",
     e_no_access:"Replies aren't working: this API key isn't allowed to use the reply model. The app owner needs to check the Anthropic account.",
     e_busy:"The reply service is busy right now. Your entry is saved. Try again in a minute.",
+    e_needs_workspace:"Replies aren't working: this API key isn't tied to an Anthropic workspace. The app owner needs to use a key created inside a workspace, or add ANTHROPIC_WORKSPACE_ID in Vercel.",
     noSample:"Your entry is saved. Replies aren't available right now."
   });
   Object.assign(T.hi,{
@@ -1061,6 +1062,7 @@ if(window.IKNOW_STANDALONE){
     e_bad_model:"जवाब नहीं आ रहे: यह मॉडल इस API key के लिए उपलब्ध नहीं है। ऐप चलाने वाले को Vercel में मॉडल सेटिंग जाँचनी होगी।",
     e_no_access:"जवाब नहीं आ रहे: इस API key को यह मॉडल इस्तेमाल करने की अनुमति नहीं है।",
     e_busy:"जवाब सेवा अभी व्यस्त है। आपकी बात सेव है। एक मिनट बाद फिर कोशिश करें।",
+    e_needs_workspace:"जवाब नहीं आ रहे: यह API key किसी Anthropic workspace से जुड़ी नहीं है। ऐप चलाने वाले को workspace वाली key लगानी होगी, या Vercel में ANTHROPIC_WORKSPACE_ID डालना होगा।",
     noSample:"आपकी बात सेव है। अभी जवाब उपलब्ध नहीं हैं।"
   });
   Object.assign(T.hl,{ privacyLine:"Sirf is browser mein, isi phone par.", suP1:"Ye sirf is browser mein, isi phone par rehti hai. Koi login nahi, koi email nahi, koi phone number nahi." });

@@ -58,7 +58,10 @@ module.exports = async function handler(req, res) {
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      headers: Object.assign(
+        { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+        process.env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": process.env.ANTHROPIC_WORKSPACE_ID.trim() } : {}
+      ),
       body: JSON.stringify({
         model,
         max_tokens: quick ? 600 : 1500,
@@ -76,6 +79,7 @@ module.exports = async function handler(req, res) {
       let code = "unavailable";
       if (r.status === 401 || errType === "authentication_error") code = "bad_key";
       else if (r.status === 403 || errType === "permission_error") code = "no_access";
+      else if (/workspace/i.test(errMsg)) code = "needs_workspace";
       else if (/credit balance|billing/i.test(errMsg)) code = "no_credit";
       else if (r.status === 404 || errType === "not_found_error" || /model/i.test(errMsg)) code = "bad_model";
       else if (r.status === 529 || errType === "overloaded_error") code = "busy";

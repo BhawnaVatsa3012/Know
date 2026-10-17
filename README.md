@@ -25,6 +25,7 @@ Add these under **Project → Settings → Environment Variables**, then redeplo
 |---|---|---|
 | `ANTHROPIC_API_KEY` | **Yes** | Your key from [console.anthropic.com](https://console.anthropic.com). Without it, replies show "Replies aren't switched on yet". |
 | `IKNOW_ACCESS_CODE` | Recommended | An invite code. When set, each phone must enter it once before replies work, so strangers who find the link can't spend your API credit. |
+| `ANTHROPIC_WORKSPACE_ID` | Only if needed | Needed only when your API key isn't tied to a workspace (Anthropic then says the request "must include the anthropic-workspace-id header"). Copy the ID from console.anthropic.com → Workspaces. Easier: create the key inside a workspace instead. |
 | `ANTHROPIC_MODEL` | No | Model for replies. Default `claude-sonnet-5-5`. |
 | `ANTHROPIC_MODEL_QUICK` | No | Model for quick tasks (picking a voice, style summaries). Default `claude-haiku-5-5`. |
 
