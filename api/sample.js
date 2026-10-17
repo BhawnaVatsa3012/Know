@@ -1,7 +1,8 @@
 // IKnOw reply endpoint (Vercel serverless function).
 // The browser sends the prompt here; this function adds the Anthropic API key
 // (kept only in Vercel's environment) and calls the Claude Messages API.
-// Nothing is logged or stored here.
+// Nothing the person writes is logged or stored here. On an API error, only the
+// status code and error type are logged so the owner can see what went wrong.
 
 const MAX_INPUT_BYTES = 256 * 1024;
 const WINDOW_MS = 60 * 1000;
@@ -68,11 +69,25 @@ module.exports = async function handler(req, res) {
       }),
     });
     if (r.status === 429) { res.status(429).json({ code: "rate_limited" }); return; }
-    if (!r.ok) { res.status(502).json({ code: "unavailable", status: r.status }); return; }
+    if (!r.ok) {
+      // Work out why, without ever logging what the person wrote.
+      let errType = "", errMsg = "";
+      try { const e = await r.json(); errType = (e && e.error && e.error.type) || ""; errMsg = String((e && e.error && e.error.message) || ""); } catch (e) {}
+      let code = "unavailable";
+      if (r.status === 401 || errType === "authentication_error") code = "bad_key";
+      else if (r.status === 403 || errType === "permission_error") code = "no_access";
+      else if (/credit balance|billing/i.test(errMsg)) code = "no_credit";
+      else if (r.status === 404 || errType === "not_found_error" || /model/i.test(errMsg)) code = "bad_model";
+      else if (r.status === 529 || errType === "overloaded_error") code = "busy";
+      console.error("anthropic_error", JSON.stringify({ status: r.status, type: errType, code, model }));
+      res.status(502).json({ code, status: r.status });
+      return;
+    }
     const data = await r.json();
     const text = (data.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
     res.status(200).json({ text, truncated: data.stop_reason === "max_tokens" });
   } catch (e) {
+    console.error("anthropic_unreachable", String(e && e.name || "error"));
     res.status(502).json({ code: "unavailable" });
   }
 };
