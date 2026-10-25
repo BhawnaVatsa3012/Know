@@ -9,7 +9,7 @@ const { checkSession } = require("./_link");
 
 // Owner-managed access (Supabase Edge Function). Once the owner has created their account,
 // each phone needs the owner's approval; before that, the older invite-code checks apply.
-const ACCESS_URL = process.env.IKNOW_ACCESS_URL || "https://wijnzuwcluzalvpobpbr.supabase.co/functions/v1/iknow-access";
+const ACCESS_URL = process.env.IKNOW_ACCESS_URL || "https://wijnzuwcluzalvpobpbr.supabase.co/functions/v1/iknow-access?forceFunctionRegion=ap-south-1";
 const accessCache = new Map();
 async function accessStatus(token) {
   const key = String(token || "");

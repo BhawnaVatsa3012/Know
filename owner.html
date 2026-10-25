@@ -85,7 +85,7 @@
 (function(){
   const $ = (id) => document.getElementById(id);
   const SKEY = "iknow-owner:session";
-  const DEFAULT_URL = "https://wijnzuwcluzalvpobpbr.supabase.co/functions/v1/iknow-access";
+  const DEFAULT_URL = "https://wijnzuwcluzalvpobpbr.supabase.co/functions/v1/iknow-access?forceFunctionRegion=ap-south-1";
   let URL_ = DEFAULT_URL, session = "", timer = null;
   const ls = { get: (k) => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }, set: (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} } };
   const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
