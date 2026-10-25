@@ -5,5 +5,6 @@ module.exports = function handler(req, res) {
   const mode = process.env.IKNOW_DEVICE_SECRET ? "device" : (process.env.IKNOW_ACCESS_CODE ? "shared" : "open");
   const whatsapp = String(process.env.IKNOW_REQUEST_WHATSAPP || "").replace(/\D/g, "");
   const email = String(process.env.IKNOW_REQUEST_EMAIL || "").trim();
-  res.status(200).json({ mode, whatsapp: mode === "device" ? whatsapp : "", email: mode === "device" ? email : "" });
+  const links = mode === "device" && !!process.env.BLOB_READ_WRITE_TOKEN;
+  res.status(200).json({ mode, links, whatsapp: mode === "device" ? whatsapp : "", email: mode === "device" ? email : "" });
 };

@@ -12,6 +12,9 @@
   const DEV_KEY = "iknow:device-id";
   const getCode = () => { try { return localStorage.getItem(CODE_KEY) || ""; } catch (e) { return ""; } };
   const setCode = (c) => { try { localStorage.setItem(CODE_KEY, c); } catch (e) {} };
+  const SESSION_KEY = "iknow:session";
+  const getSession = () => { try { return localStorage.getItem(SESSION_KEY) || ""; } catch (e) { return ""; } };
+  const setSession = (v) => { try { v ? localStorage.setItem(SESSION_KEY, v) : localStorage.removeItem(SESSION_KEY); } catch (e) {} };
 
   /* Each phone/browser gets its own ID. Codes are made for one ID and work only with it. */
   const ALPHA = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -40,6 +43,7 @@
     return access().then((info) => new Promise((resolve) => {
       const hi = (document.documentElement.lang === "hi");
       const device = info && info.mode === "device";
+      const links = device && info.links;
       const id = deviceId();
       const L = hi ? {
         h: device ? "इस फ़ोन के लिए कोड" : "इनवाइट कोड डालिए",
@@ -60,6 +64,19 @@
         lab: device ? "This phone's code" : "Invite code", no: "Cancel", ok: "Continue",
         msg: "Hi, I'd like an IKnOw code. My phone ID: " + id
       };
+      if (links) Object.assign(L, hi ? {
+        h: "IKnOw सिर्फ़ न्योते पर है",
+        p: "जवाब पाने के लिए साइन-इन लिंक माँगिए और उसे इसी फ़ोन पर, उसी ब्राउज़र में खोलिए जिसमें IKnOw है। या अगर आपको इस फ़ोन का कोड मिला है, तो नीचे डालिए।",
+        req: "WhatsApp पर साइन-इन लिंक माँगें", reqM: "ईमेल से साइन-इन लिंक माँगें",
+        rev: "इस फ़ोन की पहुँच बंद कर दी गई है। नया साइन-इन लिंक माँगें।",
+        lab: "या इस फ़ोन का कोड", msg: "नमस्ते, मुझे IKnOw का साइन-इन लिंक चाहिए। (फ़ोन ID: " + id + ")"
+      } : {
+        h: "IKnOw is invite-only",
+        p: "To get replies, ask for a sign-in link and open it on this phone, in the browser you use IKnOw in. Or, if you were sent a code for this phone, enter it below.",
+        req: "Ask for a sign-in link on WhatsApp", reqM: "Ask for a sign-in link by email",
+        rev: "Access for this phone has been switched off. Ask for a new sign-in link.",
+        lab: "Or this phone's code", msg: "Hi, I'd like an IKnOw sign-in link. (Phone ID: " + id + ")"
+      });
       const wa = device && info.whatsapp ? "https://wa.me/" + info.whatsapp + "?text=" + encodeURIComponent(L.msg) : "";
       const ml = device && info.email ? "mailto:" + info.email + "?subject=" + encodeURIComponent("IKnOw code") + "&body=" + encodeURIComponent(L.msg) : "";
       const wrap = document.createElement("div");
@@ -89,7 +106,7 @@
     try {
       res = await fetch("/api/sample", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-iknow-code": getCode(), "x-iknow-device": deviceId() },
+        headers: { "content-type": "application/json", "x-iknow-code": getCode(), "x-iknow-device": deviceId(), "x-iknow-session": getSession() },
         body: JSON.stringify({ input, json: !!json, modelTier: opts.modelTier || "default" }),
         signal: opts.signal,
       });
@@ -99,6 +116,7 @@
     }
     let data = {};
     try { data = await res.json(); } catch (e) {}
+    if (res.status === 401 && getSession()) setSession("");      // a switched-off or stale session: fall back to asking
     if (res.status === 401 && (data.code === "needs_code" || data.code === "revoked") && (retried || 0) < 3) {
       const c = await askCode(!!getCode() || (retried || 0) > 0, data.code);
       if (!c) throw { code: "needs_code", message: "no invite code" };
@@ -136,6 +154,64 @@
       return { status: "saved" };
     },
   };
+
+
+  /* One-time sign-in links: know-zeta.vercel.app/#join=<token>.
+     The link is only used up when the person taps Activate, so opening it in the wrong place wastes nothing. */
+  function inAppBrowser() { return /WhatsApp|FBAN|FBAV|Instagram|Line\/|; wv\)/i.test(navigator.userAgent || ""); }
+  function joinToken() { const m = /(?:^#|&)join=([^&]+)/.exec(location.hash || ""); return m ? decodeURIComponent(m[1]) : ""; }
+  function clearJoin() { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { location.hash = ""; } }
+
+  function showActivate(token) {
+    const hi = (document.documentElement.lang === "hi") || /^hi/i.test(navigator.language || "");
+    const L = hi ? {
+      h: "इस फ़ोन पर IKnOw चालू करें",
+      p: "यह लिंक सिर्फ़ एक बार, एक ही फ़ोन पर चलता है। इसे उसी ब्राउज़र में खोलिए जिसमें आप IKnOw इस्तेमाल करेंगे (Chrome या Safari), फिर चालू करें दबाइए।",
+      inapp: "लगता है आप WhatsApp के अंदर वाले ब्राउज़र में हैं। पहले ⋮ या शेयर आइकन दबाकर “Chrome में खोलें” (या Safari) चुनिए, वरना आपकी डायरी यहीं अटक जाएगी।",
+      go: "इस फ़ोन पर चालू करें", no: "अभी नहीं", wait: "चालू हो रहा है…", done: "हो गया! IKnOw इस फ़ोन पर चालू है।", ok: "ठीक है",
+      e: { used: "यह लिंक पहले ही इस्तेमाल हो चुका है। नया लिंक माँगिए।", expired: "यह लिंक पुराना हो गया है (7 दिन)। नया लिंक माँगिए।",
+           bad_link: "यह लिंक सही नहीं है। पूरा लिंक दोबारा खोलकर देखें।", revoked: "यह लिंक बंद कर दिया गया है।",
+           links_off: "साइन-इन लिंक अभी चालू नहीं हैं।", links_not_ready: "साइन-इन लिंक अभी तैयार नहीं हैं। ऐप चलाने वाले को बताइए।",
+           rate_limited: "बहुत बार कोशिश हुई। एक मिनट रुकिए।", net: "कनेक्शन नहीं मिला। फिर कोशिश करें।" },
+      already: "यह फ़ोन पहले से चालू है। लिंक इस्तेमाल नहीं हुआ, इसे किसी और को मत दीजिए।"
+    } : {
+      h: "Activate IKnOw on this phone",
+      p: "This link works once, on one phone. Open it in the browser you'll use IKnOw in (Chrome or Safari), then tap Activate.",
+      inapp: "It looks like you're inside WhatsApp's own browser. Tap ⋮ or the share icon and choose “Open in Chrome” (or Safari) first, or your diary will be stuck in here.",
+      go: "Activate on this phone", no: "Not now", wait: "Activating…", done: "Done! IKnOw is active on this phone.", ok: "OK",
+      e: { used: "This link has already been used. Ask for a new one.", expired: "This link has expired (links last 7 days). Ask for a new one.",
+           bad_link: "This link isn't valid. Try opening the whole link again.", revoked: "This link has been switched off.",
+           links_off: "Sign-in links aren't switched on.", links_not_ready: "Sign-in links aren't ready yet. Let the person who runs this IKnOw know.",
+           rate_limited: "Too many tries. Wait a minute.", net: "No connection. Try again." },
+      already: "This phone is already active. The link wasn't used, so don't pass it on."
+    };
+    const wrap = document.createElement("div");
+    wrap.className = "layer open"; wrap.style.zIndex = "70";
+    const card = (inner) => `<div class="scrim"></div><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="jH">${inner}</div>`;
+    const close = () => { wrap.remove(); clearJoin(); };
+    const message = (t, good) => {
+      wrap.innerHTML = card(`<h3 id="jH">${L.h}</h3><div class="dbody"><p id="jMsg" ${good ? "" : 'style="color:var(--danger)"'}>${t}</p></div>
+        <div class="acts"><button class="btn btn-primary" type="button" id="jOk">${L.ok}</button></div>`);
+      wrap.querySelector("#jOk").onclick = close;
+    };
+    document.body.appendChild(wrap);
+    if (getSession()) { message(L.already, true); return; }
+    wrap.innerHTML = card(`<h3 id="jH">${L.h}</h3><div class="dbody"><p>${L.p}</p>
+      ${inAppBrowser() ? `<p id="jInApp" style="color:var(--danger)">${L.inapp}</p>` : ""}<p id="jErr" style="color:var(--danger)"></p></div>
+      <div class="acts"><button class="btn btn-secondary" type="button" id="jNo">${L.no}</button><button class="btn btn-primary" type="button" id="jGo">${L.go}</button></div>`);
+    wrap.querySelector("#jNo").onclick = () => wrap.remove();          // keep the link in the address bar for later
+    wrap.querySelector("#jGo").onclick = async () => {
+      const b = wrap.querySelector("#jGo"); b.disabled = true; b.textContent = L.wait;
+      let r, data = {};
+      try { r = await fetch("/api/activate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token }) }); data = await r.json(); }
+      catch (e) { wrap.querySelector("#jErr").textContent = L.e.net; b.disabled = false; b.textContent = L.go; return; }
+      if (r.ok && data.session) { setSession(data.session); clearJoin(); message(L.done, true); return; }
+      message(L.e[data.code] || L.e.bad_link, false);
+    };
+  }
+
+  function initJoin() { const t = joinToken(); if (t) showActivate(t); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(initJoin, 300)); else setTimeout(initJoin, 300);
 
   const caps = { sample, downloads };
   window.claude = { use: async (name) => caps[name] || null };

@@ -28,12 +28,23 @@ Add these under **Project → Settings → Environment Variables**, then redeplo
 | `IKNOW_DEVICE_SECRET` | Recommended | Turns on **phone-specific codes** (replaces `IKNOW_ACCESS_CODE`). A long phrase only you know, at least 20 characters. Changing it switches off every phone's code at once. |
 | `IKNOW_REQUEST_WHATSAPP` | With phone codes | Your WhatsApp number with country code, e.g. `919800000000`. The app's "Request a code" button opens WhatsApp to this number with the phone's ID filled in. |
 | `IKNOW_REQUEST_EMAIL` | Optional | An email address for code requests, as well as or instead of WhatsApp. |
-| `IKNOW_REVOKED_DEVICES` | Optional | Phone IDs to switch off, separated by commas, e.g. `NY4C-ECWJ, K7M2-Q9XD`. |
+| `IKNOW_REVOKED_DEVICES` | Optional | Link IDs or phone IDs to switch off, separated by commas, e.g. `X9A5-Y3RJ, NY4C-ECWJ`. |
+| `BLOB_READ_WRITE_TOKEN` | For sign-in links | Added automatically when you connect a Vercel Blob store to the project (Storage → Create → Blob). |
 | `ANTHROPIC_WORKSPACE_ID` | Only if needed | Needed only when your API key isn't tied to a workspace (Anthropic then says the request "must include the anthropic-workspace-id header"). Copy the ID from console.anthropic.com → Workspaces. Easier: create the key inside a workspace instead. |
 | `ANTHROPIC_MODEL` | No | Model for replies. Default `claude-sonnet-5-5`. |
 | `ANTHROPIC_MODEL_QUICK` | No | Model for quick tasks (picking a voice, style summaries). Default `claude-haiku-5-5`. |
 
 The function also limits each IP address to 20 requests a minute (best effort).
+
+## One-time sign-in links (recommended)
+
+Needs `IKNOW_DEVICE_SECRET` and a Vercel Blob store connected to the project.
+
+1. Open **`/owner`**, enter your secret, tap **Make a sign-in link**, then **Copy a message to send**.
+2. The person opens the link in Chrome or Safari (the page warns them if they are inside WhatsApp's own browser) and taps **Activate on this phone**.
+3. That browser is now signed in. The link is used up: opened anywhere else it says "already been used". Unused links expire after 7 days. Opening a link without tapping Activate uses nothing.
+
+The Blob store holds only `iknow-used/<linkId>` markers. No names, no diary text. Replies are checked by signature, so there is no lookup per reply.
 
 ## Phone-specific codes
 

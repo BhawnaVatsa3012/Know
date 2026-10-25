@@ -5,6 +5,7 @@
 // status code and error type are logged so the owner can see what went wrong.
 
 const { checkDevice } = require("./_device");
+const { checkSession } = require("./_link");
 
 const MAX_INPUT_BYTES = 256 * 1024;
 const WINDOW_MS = 60 * 1000;
@@ -42,7 +43,9 @@ module.exports = async function handler(req, res) {
   const access = process.env.IKNOW_ACCESS_CODE;
   if (deviceSecret) {
     // Phone-specific codes: the code must belong to this phone's ID.
-    const bad = checkDevice(deviceSecret, req.headers["x-iknow-device"], req.headers["x-iknow-code"]);
+    // Phone-specific access: a session from a sign-in link, or a phone code made for this phone's ID.
+    const session = req.headers["x-iknow-session"];
+    const bad = session ? checkSession(deviceSecret, session) : checkDevice(deviceSecret, req.headers["x-iknow-device"], req.headers["x-iknow-code"]);
     if (bad) { res.status(401).json({ code: bad }); return; }
   } else if (access && req.headers["x-iknow-code"] !== access) { res.status(401).json({ code: "needs_code" }); return; }
 

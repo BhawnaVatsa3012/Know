@@ -32,7 +32,7 @@
 <body>
 <main>
   <h1>IKn<b>O</b>w codes</h1>
-  <p class="sub">For the owner only. Turns a phone ID into that phone's code.</p>
+  <p class="sub">For the owner only. Make one-time sign-in links, or a code for a phone ID.</p>
 
   <section class="card">
     <label for="sec">Owner secret (the value of IKNOW_DEVICE_SECRET in Vercel)</label>
@@ -41,7 +41,22 @@
   </section>
 
   <section class="card">
-    <label for="pid">Phone ID they sent you</label>
+    <label>Sign-in link (recommended)</label>
+    <p class="hint" style="margin:0 0 12px">Works once, on the first phone that activates it, within 7 days.</p>
+    <p class="err" id="lerr"></p>
+    <button id="mk" type="button">Make a sign-in link</button>
+  </section>
+
+  <section class="card" id="lout" hidden>
+    <label>Link <span id="lid"></span></label>
+    <p id="link" style="word-break:break-all;font-size:14px;margin:4px 0 12px;user-select:all"></p>
+    <button id="lcopy" type="button">Copy a message to send</button>
+    <p class="okmsg" id="lcopied"></p>
+    <p class="hint" style="margin:8px 0 0">To switch this phone off later, you'll need the link ID <strong id="lid2"></strong>. Note it privately if you might.</p>
+  </section>
+
+  <section class="card">
+    <label for="pid">Or: a code for a phone ID they sent you</label>
     <input id="pid" placeholder="XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
     <p class="err" id="err"></p>
     <button id="go" type="button">Make code</button>
@@ -54,8 +69,8 @@
     <p class="okmsg" id="copied"></p>
   </section>
 
-  <p class="hint">The code only works on the phone with that ID. Nothing is sent anywhere from this page; the code is worked out right here.</p>
-  <p class="hint">To switch a phone off later, add its ID to <code>IKNOW_REVOKED_DEVICES</code> in Vercel (separate several with commas), then redeploy.</p>
+  <p class="hint">Links and codes are worked out right here, in this browser. Nothing is sent anywhere from this page.</p>
+  <p class="hint">To switch a phone off later, add its link ID or phone ID to <code>IKNOW_REVOKED_DEVICES</code> in Vercel (separate several with commas), then redeploy.</p>
 </main>
 <script>
 (function(){
@@ -72,6 +87,34 @@
     let out = ""; for (let i = 0; i < 8; i++) out += ALPHA[mac[i] % ALPHA.length];
     return out.slice(0, 4) + "-" + out.slice(4);
   }
+
+  async function hmacB64(secret, msg, n) {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(msg)));
+    let bin = ""; mac.forEach((b) => { bin += String.fromCharCode(b); });
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "").slice(0, n);
+  }
+
+  async function makeLink() {
+    $("lerr").textContent = ""; $("lcopied").textContent = "";
+    const secret = $("sec").value;
+    if (!secret) { $("lerr").textContent = "Enter the owner secret first."; $("sec").focus(); return; }
+    try { if ($("rem").checked) localStorage.setItem(KEY, secret); else localStorage.removeItem(KEY); } catch (e) {}
+    const r = new Uint8Array(8); crypto.getRandomValues(r);
+    let id = ""; for (let i = 0; i < 8; i++) id += ALPHA[r[i] % ALPHA.length];
+    const exp = (Math.floor(Date.now() / 86400000) + 7).toString(36);
+    const token = id + "." + exp + "." + await hmacB64(secret, "iknow-link:" + id + "." + exp, 16);
+    const link = location.origin + "/#join=" + token;
+    const pretty = id.slice(0, 4) + "-" + id.slice(4);
+    $("lid").textContent = pretty; $("lid2").textContent = pretty; $("link").textContent = link; $("lout").hidden = false;
+    $("lcopy").onclick = async () => {
+      const msg = "Here's your IKnOw sign-in link. Open it in Chrome or Safari (not inside WhatsApp), then tap Activate. It works once, on one phone, for 7 days:\n" + link;
+      try { await navigator.clipboard.writeText(msg); $("lcopied").textContent = "Copied. Paste it into your message."; }
+      catch (e) { $("lcopied").textContent = "Couldn't copy. Long-press the link to copy it."; }
+    };
+  }
+  $("mk").addEventListener("click", makeLink);
 
   async function make() {
     $("err").textContent = ""; $("copied").textContent = "";
