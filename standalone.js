@@ -9,27 +9,77 @@
   window.IKNOW_STANDALONE = true;
 
   const CODE_KEY = "iknow:access-code";
+  const DEV_KEY = "iknow:device-id";
   const getCode = () => { try { return localStorage.getItem(CODE_KEY) || ""; } catch (e) { return ""; } };
   const setCode = (c) => { try { localStorage.setItem(CODE_KEY, c); } catch (e) {} };
 
-  function askCode(wrong) {
-    return new Promise((resolve) => {
+  /* Each phone/browser gets its own ID. Codes are made for one ID and work only with it. */
+  const ALPHA = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+  let memId = "";
+  function deviceId() {
+    try { const v = localStorage.getItem(DEV_KEY); if (v && /^[2-9A-Z]{4}-[2-9A-Z]{4}$/.test(v)) return v; } catch (e) {}
+    if (memId) return memId;
+    const r = new Uint8Array(8); crypto.getRandomValues(r);
+    let s = ""; for (let i = 0; i < 8; i++) s += ALPHA[r[i] % ALPHA.length];
+    memId = s.slice(0, 4) + "-" + s.slice(4);
+    try { localStorage.setItem(DEV_KEY, memId); } catch (e) {}
+    return memId;
+  }
+
+  let accessInfo = null;
+  async function access() {
+    if (accessInfo) return accessInfo;
+    try { const r = await fetch("/api/access", { cache: "no-store" }); accessInfo = await r.json(); }
+    catch (e) { accessInfo = { mode: "shared" }; }
+    return accessInfo;
+  }
+
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function askCode(wrong, reason) {
+    return access().then((info) => new Promise((resolve) => {
       const hi = (document.documentElement.lang === "hi");
+      const device = info && info.mode === "device";
+      const id = deviceId();
+      const L = hi ? {
+        h: device ? "इस फ़ोन के लिए कोड" : "इनवाइट कोड डालिए",
+        p: device ? "हर फ़ोन का अपना कोड होता है, जो सिर्फ़ उसी फ़ोन पर चलता है। कोड माँगिए, फिर यहाँ डालिए। यह इस फ़ोन पर एक बार ही माँगा जाएगा।"
+                  : "जवाब पाने के लिए इस IKnOw का इनवाइट कोड चाहिए। यह एक बार ही माँगा जाएगा।",
+        idL: "इस फ़ोन की ID", req: "WhatsApp पर कोड माँगें", reqM: "ईमेल से कोड माँगें",
+        wrong: "यह कोड इस फ़ोन के लिए नहीं है। ध्यान दें: कोड सिर्फ़ उसी फ़ोन पर चलता है जिसकी ID से बना है।",
+        rev: "इस फ़ोन की पहुँच बंद कर दी गई है। नया कोड माँगें।",
+        lab: device ? "इस फ़ोन का कोड" : "इनवाइट कोड", no: "रद्द करें", ok: "ठीक है",
+        msg: "नमस्ते, मुझे IKnOw का कोड चाहिए। मेरे फ़ोन की ID: " + id
+      } : {
+        h: device ? "A code for this phone" : "Enter your invite code",
+        p: device ? "Each phone has its own code, and it only works on that phone. Request one, then enter it here. You'll only be asked once on this phone."
+                  : "Replies on this IKnOw need an invite code. You'll only be asked once on this phone.",
+        idL: "This phone's ID", req: "Request a code on WhatsApp", reqM: "Request a code by email",
+        wrong: "That code isn't for this phone. A code only works on the phone whose ID it was made for.",
+        rev: "Access for this phone has been switched off. Request a new code.",
+        lab: device ? "This phone's code" : "Invite code", no: "Cancel", ok: "Continue",
+        msg: "Hi, I'd like an IKnOw code. My phone ID: " + id
+      };
+      const wa = device && info.whatsapp ? "https://wa.me/" + info.whatsapp + "?text=" + encodeURIComponent(L.msg) : "";
+      const ml = device && info.email ? "mailto:" + info.email + "?subject=" + encodeURIComponent("IKnOw code") + "&body=" + encodeURIComponent(L.msg) : "";
       const wrap = document.createElement("div");
       wrap.className = "layer open"; wrap.style.zIndex = "60";
       wrap.innerHTML = `<div class="scrim"></div><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="acH">
-        <h3 id="acH">${hi ? "इनवाइट कोड डालिए" : "Enter your invite code"}</h3>
-        <div class="dbody"><p>${hi ? "जवाब पाने के लिए इस IKnOw का इनवाइट कोड चाहिए। यह एक बार ही माँगा जाएगा।" : "Replies on this IKnOw need an invite code. You'll only be asked once on this phone."}</p>
-        ${wrong ? `<p style="color:var(--danger)">${hi ? "यह कोड मेल नहीं खाया।" : "That code didn't match."}</p>` : ""}</div>
-        <label class="flabel" for="acIn">${hi ? "इनवाइट कोड" : "Invite code"}</label><input class="field" id="acIn" autocomplete="off" autocapitalize="off" spellcheck="false">
-        <div class="acts"><button class="btn btn-secondary" type="button" id="acNo">${hi ? "रद्द करें" : "Cancel"}</button><button class="btn btn-primary" type="button" id="acOk">${hi ? "ठीक है" : "Continue"}</button></div></div>`;
+        <h3 id="acH">${L.h}</h3>
+        <div class="dbody"><p>${L.p}</p>
+        ${device ? `<p>${L.idL}: <strong id="acId" style="letter-spacing:.08em;font-size:1.15em;user-select:all">${esc(id)}</strong></p>` : ""}
+        ${wrong ? `<p style="color:var(--danger)">${reason === "revoked" ? L.rev : (device ? L.wrong : (hi ? "यह कोड मेल नहीं खाया।" : "That code didn't match."))}</p>` : ""}
+        ${wa ? `<p><a class="btn btn-secondary" id="acReq" href="${esc(wa)}" target="_blank" rel="noopener">${L.req}</a></p>` : ""}
+        ${ml ? `<p><a class="btn btn-secondary" id="acReqM" href="${esc(ml)}">${L.reqM}</a></p>` : ""}</div>
+        <label class="flabel" for="acIn">${L.lab}</label><input class="field" id="acIn" autocomplete="off" autocapitalize="characters" spellcheck="false" ${device ? 'placeholder="XXXX-XXXX"' : ""}>
+        <div class="acts"><button class="btn btn-secondary" type="button" id="acNo">${L.no}</button><button class="btn btn-primary" type="button" id="acOk">${L.ok}</button></div></div>`;
       document.body.appendChild(wrap);
       const inp = wrap.querySelector("#acIn"); setTimeout(() => inp.focus(), 20);
       const done = (v) => { wrap.remove(); resolve(v); };
       wrap.querySelector("#acOk").onclick = () => done(inp.value.trim());
       wrap.querySelector("#acNo").onclick = () => done(null);
       inp.addEventListener("keydown", (e) => { if (e.key === "Enter") done(inp.value.trim()); });
-    });
+    }));
   }
 
   async function call(input, opts, json, retried) {
@@ -39,7 +89,7 @@
     try {
       res = await fetch("/api/sample", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-iknow-code": getCode() },
+        headers: { "content-type": "application/json", "x-iknow-code": getCode(), "x-iknow-device": deviceId() },
         body: JSON.stringify({ input, json: !!json, modelTier: opts.modelTier || "default" }),
         signal: opts.signal,
       });
@@ -49,11 +99,11 @@
     }
     let data = {};
     try { data = await res.json(); } catch (e) {}
-    if (res.status === 401 && data.code === "needs_code" && !retried) {
-      const c = await askCode(!!getCode());
+    if (res.status === 401 && (data.code === "needs_code" || data.code === "revoked") && (retried || 0) < 3) {
+      const c = await askCode(!!getCode() || (retried || 0) > 0, data.code);
       if (!c) throw { code: "needs_code", message: "no invite code" };
       setCode(c);
-      return call(input, opts, json, true);
+      return call(input, opts, json, (retried || 0) + 1);
     }
     if (res.status === 401) { try { localStorage.removeItem(CODE_KEY); } catch (e) {} throw { code: "needs_code", message: "wrong invite code" }; }
     if (!res.ok) throw { code: data.code || (res.status === 429 ? "rate_limited" : "unavailable"), message: "HTTP " + res.status };

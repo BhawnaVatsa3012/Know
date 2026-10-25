@@ -1,0 +1,9 @@
+// Tells the app which kind of access this IKnOw uses, and where to send code requests.
+// Holds no secrets: the owner's WhatsApp number / email are what the owner chose to publish to invitees.
+module.exports = function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+  const mode = process.env.IKNOW_DEVICE_SECRET ? "device" : (process.env.IKNOW_ACCESS_CODE ? "shared" : "open");
+  const whatsapp = String(process.env.IKNOW_REQUEST_WHATSAPP || "").replace(/\D/g, "");
+  const email = String(process.env.IKNOW_REQUEST_EMAIL || "").trim();
+  res.status(200).json({ mode, whatsapp: mode === "device" ? whatsapp : "", email: mode === "device" ? email : "" });
+};

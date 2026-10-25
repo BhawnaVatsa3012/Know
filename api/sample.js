@@ -4,6 +4,8 @@
 // Nothing the person writes is logged or stored here. On an API error, only the
 // status code and error type are logged so the owner can see what went wrong.
 
+const { checkDevice } = require("./_device");
+
 const MAX_INPUT_BYTES = 256 * 1024;
 const WINDOW_MS = 60 * 1000;
 const MAX_PER_WINDOW = 20;           // per IP, best effort (per warm instance)
@@ -36,8 +38,13 @@ module.exports = async function handler(req, res) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) { res.status(503).json({ code: "not_configured" }); return; }
 
+  const deviceSecret = process.env.IKNOW_DEVICE_SECRET;
   const access = process.env.IKNOW_ACCESS_CODE;
-  if (access && req.headers["x-iknow-code"] !== access) { res.status(401).json({ code: "needs_code" }); return; }
+  if (deviceSecret) {
+    // Phone-specific codes: the code must belong to this phone's ID.
+    const bad = checkDevice(deviceSecret, req.headers["x-iknow-device"], req.headers["x-iknow-code"]);
+    if (bad) { res.status(401).json({ code: bad }); return; }
+  } else if (access && req.headers["x-iknow-code"] !== access) { res.status(401).json({ code: "needs_code" }); return; }
 
   const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
   if (tooMany(ip)) { res.status(429).json({ code: "rate_limited" }); return; }
