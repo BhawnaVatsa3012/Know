@@ -9,7 +9,7 @@ const sql = postgres(Deno.env.get("SUPABASE_DB_URL")!, { max: 3, prepare: false,
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "content-type",
 };
 const json = (status: number, body: unknown) =>
@@ -36,6 +36,18 @@ async function limited(kind: string, key: string, max: number, minutes: number) 
   return n >= max;
 }
 const note = (kind: string, key: string) => sql`insert into iknow.attempts (kind, key) values (${kind}, ${key})`;
+
+// One-time removal of the records created while testing this service (exact matches only).
+const TEST_PASS_HASH = "52a1d81ed84fadbf48a13cd0ef81afd8f29f713dcafd2d65b4b022497427b6c5";
+let testCleaned: Promise<unknown> | null = null;
+function cleanTestData() {
+  testCleaned ??= (async () => {
+    await sql`delete from iknow.owner where username = 'tester' and pass_hash = ${TEST_PASS_HASH}`;
+    await sql`delete from iknow.owner_sessions where token_hash = 'eab17128f017e60610ed17ef3782e13b57785c814b61897429b85c99563a3064'`;
+    await sql`delete from iknow.devices where token_hash in ('1b6ff1326de92726e96ef3aa886a33789da831d7ee247ee36aacb475ddfa2e48', '25aa6092de6c1e8adea6b96ba38563a1af15f39ed17b92b4c2f39700da5faa89')`;
+  })().catch((e) => { testCleaned = null; throw e; });
+  return testCleaned;
+}
 
 async function ownerExists() { const r = await sql`select 1 from iknow.owner where id = 1`; return r.length > 0; }
 
@@ -67,12 +79,17 @@ async function deviceView() {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+  if (req.method === "GET") {           // health check: is the service up, and does an owner account exist?
+    try { await cleanTestData(); return json(200, { ok: true, claimed: await ownerExists() }); }
+    catch { return json(500, { ok: false }); }
+  }
   if (req.method !== "POST") return json(405, { code: "bad_request" });
   let b: Record<string, unknown> = {};
   try { b = await req.json(); } catch { return json(400, { code: "bad_request" }); }
   const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
 
   try {
+    await cleanTestData();
     switch (b.action) {
       // ---- for the app and the reply server ----
       case "check": {                      // is this phone allowed?
