@@ -4,137 +4,210 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>IKnOw codes</title>
+<title>IKnOw owner</title>
 <style>
   :root { --bg:#16140F; --card:#201D17; --ink:#F2EDE4; --muted:#B4AC9F; --rule:#3A352C; --gold:#D6A75A; --danger:#E58B7B; --ok:#9CC59A; }
   @media (prefers-color-scheme: light) { :root { --bg:#FAF7F1; --card:#FFFFFF; --ink:#201F1D; --muted:#5E5850; --rule:#DDD6CA; --gold:#9A6A22; --danger:#B4402F; --ok:#2E7A3A; } }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 Georgia, "Times New Roman", serif; }
-  main { max-width:440px; margin:0 auto; padding:28px 16px 48px; }
-  h1 { font-weight:400; font-size:28px; margin:0 0 4px; }
+  main { max-width:520px; margin:0 auto; padding:28px 16px 48px; }
+  header { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:6px; }
+  h1 { font-weight:400; font-size:28px; margin:0; }
   h1 b { color:var(--gold); font-weight:400; }
-  .sub { color:var(--muted); margin:0 0 24px; font-size:15px; }
-  .card { background:var(--card); border:1px solid var(--rule); border-radius:14px; padding:18px; margin-bottom:16px; }
-  label { display:block; font-size:14px; color:var(--muted); margin:0 0 6px; }
-  input { width:100%; font:inherit; font-size:18px; color:var(--ink); background:transparent; border:1px solid var(--rule); border-radius:10px; padding:12px; letter-spacing:.06em; }
-  input:focus { outline:2px solid var(--gold); outline-offset:1px; }
-  .row { display:flex; gap:10px; align-items:center; margin-top:10px; font-size:14px; color:var(--muted); }
-  button { font:inherit; font-size:15px; color:var(--gold); background:transparent; border:1px solid var(--gold); border-radius:999px; padding:10px 18px; cursor:pointer; min-height:44px; }
+  h2 { font-weight:400; font-size:19px; margin:26px 0 10px; display:flex; align-items:center; gap:8px; }
+  .count { font-size:13px; color:var(--bg); background:var(--gold); border-radius:999px; padding:1px 9px; }
+  .sub { color:var(--muted); margin:0 0 20px; font-size:15px; }
+  .card { background:var(--card); border:1px solid var(--rule); border-radius:14px; padding:18px; margin-bottom:12px; }
+  label { display:block; font-size:14px; color:var(--muted); margin:12px 0 6px; }
+  input { width:100%; font:inherit; font-size:17px; color:var(--ink); background:transparent; border:1px solid var(--rule); border-radius:10px; padding:11px 12px; }
+  input:focus, button:focus-visible { outline:2px solid var(--gold); outline-offset:1px; }
+  button { font:inherit; font-size:15px; color:var(--gold); background:transparent; border:1px solid var(--gold); border-radius:999px; padding:9px 16px; cursor:pointer; min-height:44px; }
+  button.primary { background:var(--gold); color:var(--bg); }
+  button.danger { color:var(--danger); border-color:var(--danger); }
+  button.quiet { border-color:var(--rule); color:var(--muted); }
   button:disabled { opacity:.5; cursor:default; }
-  .code { font-size:34px; letter-spacing:.12em; text-align:center; margin:6px 0 12px; color:var(--gold); user-select:all; }
-  .err { color:var(--danger); font-size:14px; min-height:1.2em; margin:8px 0 0; }
-  .okmsg { color:var(--ok); font-size:14px; min-height:1.2em; }
-  .hint { color:var(--muted); font-size:14px; }
-  .hint code { font-family: ui-monospace, Menlo, monospace; font-size:13px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .err { color:var(--danger); font-size:14px; min-height:1.2em; margin:10px 0 0; }
+  .ok { color:var(--ok); font-size:14px; }
+  .hint { color:var(--muted); font-size:14px; margin:8px 0 0; }
+  .who { font-size:17px; }
+  .meta { color:var(--muted); font-size:13px; margin-top:2px; }
+  .empty { color:var(--muted); font-size:15px; padding:6px 2px; }
+  details summary { cursor:pointer; color:var(--muted); font-size:14px; margin-top:28px; }
   [hidden] { display:none !important; }
 </style>
 </head>
 <body>
 <main>
-  <h1>IKn<b>O</b>w codes</h1>
-  <p class="sub">For the owner only. Make one-time sign-in links, or a code for a phone ID.</p>
+  <header><h1>IKn<b>O</b>w owner</h1><button class="quiet" id="out" type="button" hidden>Sign out</button></header>
+  <p class="sub" id="sub">Approve or switch off the phones that use your IKnOw.</p>
 
-  <section class="card">
-    <label for="sec">Owner secret (the value of IKNOW_DEVICE_SECRET in Vercel)</label>
-    <input id="sec" type="password" autocomplete="off" spellcheck="false">
-    <div class="row"><input id="rem" type="checkbox" style="width:auto"><label for="rem" style="margin:0">Remember on this device</label></div>
+  <section id="vLoad" class="card"><p class="empty" id="loadMsg">Loading…</p></section>
+
+  <!-- First time: create the owner account -->
+  <section id="vClaim" class="card" hidden>
+    <p style="margin:0">Create your owner account. Only you will know the password; it is never stored, only a scrambled form of it.</p>
+    <label for="cUser">Username</label><input id="cUser" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="40">
+    <label for="cPass">Password (at least 8 characters)</label><input id="cPass" type="password" autocomplete="new-password">
+    <label for="cPass2">Password again</label><input id="cPass2" type="password" autocomplete="new-password">
+    <div id="cInviteBox"><label for="cInvite">Your current invite code (proves this is you)</label><input id="cInvite" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <p class="hint" id="cInviteFound" hidden>Using the invite code already saved on this phone, to prove it's you.</p>
+    <p class="err" id="cErr"></p>
+    <div class="row"><button class="primary" id="cGo" type="button">Create owner account</button></div>
   </section>
 
-  <section class="card">
-    <label>Sign-in link (recommended)</label>
-    <p class="hint" style="margin:0 0 12px">Works once, on the first phone that activates it, within 7 days.</p>
-    <p class="err" id="lerr"></p>
-    <button id="mk" type="button">Make a sign-in link</button>
+  <!-- Sign in -->
+  <section id="vLogin" class="card" hidden>
+    <label for="lUser" style="margin-top:0">Username</label><input id="lUser" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="40">
+    <label for="lPass">Password</label><input id="lPass" type="password" autocomplete="current-password">
+    <p class="err" id="lErr"></p>
+    <div class="row"><button class="primary" id="lGo" type="button">Sign in</button></div>
   </section>
 
-  <section class="card" id="lout" hidden>
-    <label>Link <span id="lid"></span></label>
-    <p id="link" style="word-break:break-all;font-size:14px;margin:4px 0 12px;user-select:all"></p>
-    <button id="lcopy" type="button">Copy a message to send</button>
-    <p class="okmsg" id="lcopied"></p>
-    <p class="hint" style="margin:8px 0 0">To switch this phone off later, you'll need the link ID <strong id="lid2"></strong>. Note it privately if you might.</p>
+  <!-- Dashboard -->
+  <section id="vDash" hidden>
+    <h2>Asking for access <span class="count" id="nPending" hidden></span></h2><div id="lPending"></div>
+    <h2>Have access</h2><div id="lActive"></div>
+    <h2>Switched off</h2><div id="lRevoked"></div>
+    <p class="hint">This page refreshes by itself. Approving or switching off takes effect on that phone within about 30 seconds.</p>
+    <p class="err" id="dErr"></p>
+    <details><summary>Change password</summary>
+      <div class="card" style="margin-top:10px">
+        <label for="pOld" style="margin-top:0">Current password</label><input id="pOld" type="password" autocomplete="current-password">
+        <label for="pNew">New password (at least 8 characters)</label><input id="pNew" type="password" autocomplete="new-password">
+        <p class="err" id="pErr"></p><p class="ok" id="pOk"></p>
+        <div class="row"><button id="pGo" type="button">Change password</button></div>
+      </div>
+    </details>
   </section>
-
-  <section class="card">
-    <label for="pid">Or: a code for a phone ID they sent you</label>
-    <input id="pid" placeholder="XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
-    <p class="err" id="err"></p>
-    <button id="go" type="button">Make code</button>
-  </section>
-
-  <section class="card" id="out" hidden>
-    <label>Code for <span id="forId"></span></label>
-    <div class="code" id="code"></div>
-    <button id="copy" type="button">Copy a reply to send</button>
-    <p class="okmsg" id="copied"></p>
-  </section>
-
-  <p class="hint">Links and codes are worked out right here, in this browser. Nothing is sent anywhere from this page.</p>
-  <p class="hint">To switch a phone off later, add its link ID or phone ID to <code>IKNOW_REVOKED_DEVICES</code> in Vercel (separate several with commas), then redeploy.</p>
 </main>
 <script>
 (function(){
-  const ALPHA = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-  const KEY = "iknow-owner:secret";
   const $ = (id) => document.getElementById(id);
-  const norm = (s) => String(s || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
-  try { const s = localStorage.getItem(KEY); if (s) { $("sec").value = s; $("rem").checked = true; } } catch (e) {}
+  const SKEY = "iknow-owner:session";
+  const DEFAULT_URL = "https://wijnzuwcluzalvpobpbr.supabase.co/functions/v1/iknow-access";
+  let URL_ = DEFAULT_URL, session = "", timer = null;
+  const ls = { get: (k) => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }, set: (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} } };
+  const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-  async function codeFor(secret, id) {
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-    const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode("iknow-device:" + norm(id))));
-    let out = ""; for (let i = 0; i < 8; i++) out += ALPHA[mac[i] % ALPHA.length];
-    return out.slice(0, 4) + "-" + out.slice(4);
+  // This phone's own token (same one the diary uses), so the owner's phone gets access automatically.
+  function deviceToken() {
+    let v = ls.get("iknow:device-token");
+    if (!/^[A-Za-z0-9_-]{43}$/.test(v)) {
+      const r = new Uint8Array(32); crypto.getRandomValues(r);
+      v = btoa(String.fromCharCode.apply(null, r)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      ls.set("iknow:device-token", v);
+    }
+    return v;
   }
 
-  async function hmacB64(secret, msg, n) {
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-    const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(msg)));
-    let bin = ""; mac.forEach((b) => { bin += String.fromCharCode(b); });
-    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "").slice(0, n);
+  async function api(body) {
+    const r = await fetch(URL_, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    let d = {}; try { d = await r.json(); } catch (e) {}
+    return { status: r.status, ok: r.ok, d };
   }
+  const show = (v) => ["vLoad", "vClaim", "vLogin", "vDash"].forEach((x) => { $(x).hidden = x !== v; });
+  const MSG = { bad_login: "That username and password don't match.", rate_limited: "Too many tries. Wait 15 minutes, then try again.",
+    bad_invite: "That invite code doesn't match the one set for this IKnOw.", weak_password: "Use at least 8 characters.",
+    bad_username: "Use at least 3 characters for the username.", already_claimed: "An owner account already exists. Sign in instead.",
+    signed_out: "You've been signed out. Sign in again.", unavailable: "Something went wrong. Try again in a moment.", net: "No connection. Try again." };
+  const msg = (code) => MSG[code] || MSG.unavailable;
 
-  async function makeLink() {
-    $("lerr").textContent = ""; $("lcopied").textContent = "";
-    const secret = $("sec").value;
-    if (!secret) { $("lerr").textContent = "Enter the owner secret first."; $("sec").focus(); return; }
-    try { if ($("rem").checked) localStorage.setItem(KEY, secret); else localStorage.removeItem(KEY); } catch (e) {}
-    const r = new Uint8Array(8); crypto.getRandomValues(r);
-    let id = ""; for (let i = 0; i < 8; i++) id += ALPHA[r[i] % ALPHA.length];
-    const exp = (Math.floor(Date.now() / 86400000) + 7).toString(36);
-    const token = id + "." + exp + "." + await hmacB64(secret, "iknow-link:" + id + "." + exp, 16);
-    const link = location.origin + "/#join=" + token;
-    const pretty = id.slice(0, 4) + "-" + id.slice(4);
-    $("lid").textContent = pretty; $("lid2").textContent = pretty; $("link").textContent = link; $("lout").hidden = false;
-    $("lcopy").onclick = async () => {
-      const msg = "Here's your IKnOw sign-in link. Open it in Chrome or Safari (not inside WhatsApp), then tap Activate. It works once, on one phone, for 7 days:\n" + link;
-      try { await navigator.clipboard.writeText(msg); $("lcopied").textContent = "Copied. Paste it into your message."; }
-      catch (e) { $("lcopied").textContent = "Couldn't copy. Long-press the link to copy it."; }
-    };
+  function ago(ts) {
+    if (!ts) return "";
+    const s = Math.max(0, (Date.now() - new Date(ts).getTime()) / 1000);
+    if (s < 90) return "just now"; if (s < 3600) return Math.round(s / 60) + " min ago";
+    if (s < 86400) return Math.round(s / 3600) + " h ago"; const d = Math.round(s / 86400); return d + (d === 1 ? " day ago" : " days ago");
   }
-  $("mk").addEventListener("click", makeLink);
+  function row(d) {
+    const name = d.label ? esc(d.label) : "<span style='color:var(--muted)'>No name given</span>";
+    const meta = d.status === "pending" ? "Asked " + ago(d.requested_at)
+      : d.status === "active" ? (d.is_owner ? "This is you. " : "Approved " + ago(d.decided_at) + ". ") + (d.last_seen_at ? "Last used " + ago(d.last_seen_at) : "Not used yet")
+      : "Switched off " + ago(d.decided_at);
+    const btns = d.status === "pending" ? `<button class="primary" data-id="${d.id}" data-to="active">Approve</button><button class="danger" data-id="${d.id}" data-to="revoked">Decline</button>`
+      : d.status === "active" ? (d.is_owner ? "" : `<button class="danger" data-id="${d.id}" data-to="revoked">Switch off</button>`)
+      : `<button data-id="${d.id}" data-to="active">Turn back on</button><button class="quiet" data-id="${d.id}" data-to="delete">Remove</button>`;
+    return `<div class="card"><div class="who">${name}</div><div class="meta">${meta}</div>${btns ? `<div class="row">${btns}</div>` : ""}</div>`;
+  }
+  function render(list) {
+    const by = (s) => list.filter((d) => d.status === s);
+    const fill = (el, items, empty) => { $(el).innerHTML = items.length ? items.map(row).join("") : `<p class="empty">${empty}</p>`; };
+    fill("lPending", by("pending"), "No one is waiting.");
+    fill("lActive", by("active"), "No phones yet.");
+    fill("lRevoked", by("revoked"), "None.");
+    const n = by("pending").length; $("nPending").hidden = !n; $("nPending").textContent = n;
+    document.title = (n ? "(" + n + ") " : "") + "IKnOw owner";
+  }
+  async function refresh() {
+    try {
+      const r = await api({ action: "list", session });
+      if (r.status === 401) { signOutLocal(); return; }
+      if (r.ok) { render(r.d.devices || []); $("dErr").textContent = ""; } else $("dErr").textContent = msg(r.d.code);
+    } catch (e) { $("dErr").textContent = msg("net"); }
+  }
+  function startDash() { show("vDash"); $("out").hidden = false; refresh(); clearInterval(timer); timer = setInterval(refresh, 20000); }
+  function signOutLocal() { session = ""; ls.set(SKEY, ""); clearInterval(timer); $("out").hidden = true; show("vLogin"); }
 
-  async function make() {
-    $("err").textContent = ""; $("copied").textContent = "";
-    const secret = $("sec").value;
-    const id = norm($("pid").value);
-    if (!secret) { $("err").textContent = "Enter the owner secret first."; $("sec").focus(); return; }
-    if (id.length !== 8 || [...id].some((c) => !ALPHA.includes(c))) { $("err").textContent = "A phone ID is 8 letters and digits, like K7M2-Q9XD."; $("pid").focus(); return; }
-    try { if ($("rem").checked) localStorage.setItem(KEY, secret); else localStorage.removeItem(KEY); } catch (e) {}
-    const pretty = id.slice(0, 4) + "-" + id.slice(4);
-    const code = await codeFor(secret, id);
-    $("forId").textContent = pretty; $("code").textContent = code; $("out").hidden = false;
-    $("copy").onclick = async () => {
-      const msg = "Here's your IKnOw code: " + code + "\nIt only works on the phone with ID " + pretty + ". Enter it when IKnOw asks.";
-      try { await navigator.clipboard.writeText(msg); $("copied").textContent = "Copied. Paste it into your reply."; }
-      catch (e) { $("copied").textContent = "Couldn't copy. Long-press the code to copy it."; }
-    };
-  }
-  $("go").addEventListener("click", make);
-  $("pid").addEventListener("keydown", (e) => { if (e.key === "Enter") make(); });
-  $("rem").addEventListener("change", () => { if (!$("rem").checked) { try { localStorage.removeItem(KEY); } catch (e) {} } });
+  $("vDash").addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-id]"); if (!b) return;
+    if (b.dataset.to === "delete" && !confirm("Remove this phone from the list? If it asks again, it will show up as a new request.")) return;
+    b.disabled = true;
+    try {
+      const r = await api({ action: "decide", session, id: b.dataset.id, to: b.dataset.to });
+      if (r.status === 401) { signOutLocal(); return; }
+      if (r.ok) render(r.d.devices || []); else { $("dErr").textContent = msg(r.d.code); b.disabled = false; }
+    } catch (err) { $("dErr").textContent = msg("net"); b.disabled = false; }
+  });
+
+  $("cGo").onclick = async () => {
+    $("cErr").textContent = "";
+    const username = $("cUser").value.trim(), password = $("cPass").value;
+    if (password !== $("cPass2").value) { $("cErr").textContent = "The two passwords don't match."; return; }
+    const invite = ls.get("iknow:access-code") || $("cInvite").value.trim();
+    if (!invite) { $("cErr").textContent = "Enter your current invite code."; return; }
+    $("cGo").disabled = true;
+    try {
+      const r = await api({ action: "claim", username, password, invite, token: deviceToken() });
+      if (r.ok && r.d.session) { session = r.d.session; ls.set(SKEY, session); startDash(); return; }
+      if (r.d.code === "bad_invite") { $("cInviteBox").hidden = false; $("cInviteFound").hidden = true; ls.set("iknow:access-code", ""); }
+      if (r.d.code === "already_claimed") { show("vLogin"); return; }
+      $("cErr").textContent = msg(r.d.code);
+    } catch (e) { $("cErr").textContent = msg("net"); }
+    $("cGo").disabled = false;
+  };
+  $("lGo").onclick = async () => {
+    $("lErr").textContent = ""; $("lGo").disabled = true;
+    try {
+      const r = await api({ action: "login", username: $("lUser").value.trim(), password: $("lPass").value, token: deviceToken() });
+      if (r.ok && r.d.session) { session = r.d.session; ls.set(SKEY, session); $("lPass").value = ""; startDash(); }
+      else $("lErr").textContent = msg(r.d.code);
+    } catch (e) { $("lErr").textContent = msg("net"); }
+    $("lGo").disabled = false;
+  };
+  $("lPass").addEventListener("keydown", (e) => { if (e.key === "Enter") $("lGo").click(); });
+  $("out").onclick = async () => { try { await api({ action: "logout", session }); } catch (e) {} signOutLocal(); };
+  $("pGo").onclick = async () => {
+    $("pErr").textContent = ""; $("pOk").textContent = "";
+    try {
+      const r = await api({ action: "password", session, old: $("pOld").value, password: $("pNew").value });
+      if (r.ok) { $("pOk").textContent = "Password changed. Other devices have been signed out."; $("pOld").value = $("pNew").value = ""; }
+      else if (r.status === 401) signOutLocal(); else $("pErr").textContent = r.d.code === "bad_login" ? "Current password isn't right." : msg(r.d.code);
+    } catch (e) { $("pErr").textContent = msg("net"); }
+  };
+
+  (async function start() {
+    try { const a = await (await fetch("/api/access", { cache: "no-store" })).json(); if (a && a.accessUrl) URL_ = a.accessUrl; } catch (e) {}
+    session = ls.get(SKEY);
+    try {
+      const st = await api({ action: "state" });
+      if (!st.ok) { $("loadMsg").textContent = msg(st.d.code); return; }
+      if (!st.d.claimed) {
+        if (ls.get("iknow:access-code")) { $("cInviteBox").hidden = true; $("cInviteFound").hidden = false; }
+        show("vClaim"); return;
+      }
+      if (session) startDash(); else show("vLogin");
+    } catch (e) { $("loadMsg").textContent = msg("net"); }
+  })();
 })();
 </script>
 </body>

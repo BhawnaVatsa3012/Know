@@ -7,6 +7,29 @@
 const { checkDevice } = require("./_device");
 const { checkSession } = require("./_link");
 
+// Owner-managed access (Supabase Edge Function). Once the owner has created their account,
+// each phone needs the owner's approval; before that, the older invite-code checks apply.
+const ACCESS_URL = process.env.IKNOW_ACCESS_URL || "https://wijnzuwcluzalvpobpbr.supabase.co/functions/v1/iknow-access";
+const accessCache = new Map();
+async function accessStatus(token) {
+  const key = String(token || "");
+  const hit = accessCache.get(key);
+  if (hit && Date.now() < hit.until) return hit.v;
+  try {
+    const r = await fetch(ACCESS_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "check", token: key }) });
+    if (!r.ok) throw new Error("status " + r.status);
+    const v = await r.json();
+    const ttl = (!v.managed || v.status === "active") ? 30000 : 5000;
+    if (accessCache.size > 5000) accessCache.clear();
+    accessCache.set(key, { v, until: Date.now() + ttl });
+    return v;
+  } catch (e) {
+    console.error("access_check_unreachable", String(e && e.message || e).slice(0, 120));
+    return hit ? hit.v : null;     // last known answer, or null = fall back to the invite-code checks
+  }
+}
+
+
 const MAX_INPUT_BYTES = 256 * 1024;
 const WINDOW_MS = 60 * 1000;
 const MAX_PER_WINDOW = 20;           // per IP, best effort (per warm instance)
@@ -39,6 +62,13 @@ module.exports = async function handler(req, res) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) { res.status(503).json({ code: "not_configured" }); return; }
 
+  const acc = await accessStatus(req.headers["x-iknow-token"]);
+  if (acc && acc.managed) {
+    if (acc.status !== "active") {
+      res.status(401).json({ code: acc.status === "pending" ? "pending" : acc.status === "revoked" ? "access_revoked" : "needs_access" });
+      return;
+    }
+  } else {
   const deviceSecret = process.env.IKNOW_DEVICE_SECRET;
   const access = process.env.IKNOW_ACCESS_CODE;
   if (deviceSecret) {
@@ -48,6 +78,7 @@ module.exports = async function handler(req, res) {
     const bad = session ? checkSession(deviceSecret, session) : checkDevice(deviceSecret, req.headers["x-iknow-device"], req.headers["x-iknow-code"]);
     if (bad) { res.status(401).json({ code: bad }); return; }
   } else if (access && req.headers["x-iknow-code"] !== access) { res.status(401).json({ code: "needs_code" }); return; }
+  }
 
   const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
   if (tooMany(ip)) { res.status(429).json({ code: "rate_limited" }); return; }
@@ -107,3 +138,4 @@ module.exports = async function handler(req, res) {
 };
 
 module.exports.config = { maxDuration: 60 };
+module.exports._accessCache = accessCache;

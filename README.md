@@ -36,7 +36,17 @@ Add these under **Project → Settings → Environment Variables**, then redeplo
 
 The function also limits each IP address to 20 requests a minute (best effort).
 
-## One-time sign-in links (recommended)
+## Owner-approved access (recommended, fully automatic)
+
+Access is managed by a small service (Supabase Edge Function `iknow-access`, source in `supabase/functions/iknow-access/`) with its own private database schema `iknow`.
+
+1. **Owner account.** The first time, open **`/owner`** and create your username and password. To prove it's you, it checks your current `IKNOW_ACCESS_CODE` (read from your phone automatically if you've used the app there). Only a PBKDF2 hash of the password is stored.
+2. **People ask from the app.** A new phone sees "IKnOw is invite-only", types their name, and taps **Ask for access** (optionally nudging you on WhatsApp if `IKNOW_REQUEST_WHATSAPP` is set).
+3. **You tap Approve, Decline, Switch off or Turn back on** on `/owner`. It takes effect on that phone within about 30 seconds. No Vercel settings, no redeploys.
+
+Once the owner account exists, the shared invite code no longer gives anyone access; it is only used as a fallback if the access service is unreachable. Stored per phone: a hash of a random token made by that browser, the name they typed, status and dates. No diary text.
+
+## One-time sign-in links (alternative)
 
 Needs `IKNOW_DEVICE_SECRET` and a Vercel Blob store connected to the project.
 

@@ -12,6 +12,16 @@
   const DEV_KEY = "iknow:device-id";
   const getCode = () => { try { return localStorage.getItem(CODE_KEY) || ""; } catch (e) { return ""; } };
   const setCode = (c) => { try { localStorage.setItem(CODE_KEY, c); } catch (e) {} };
+  const TOKEN_KEY = "iknow:device-token";
+  let memToken = "";
+  function deviceToken() {        // a random secret for this browser; the owner approves or switches it off
+    try { const v = localStorage.getItem(TOKEN_KEY); if (v && /^[A-Za-z0-9_-]{43}$/.test(v)) return v; } catch (e) {}
+    if (memToken) return memToken;
+    const r = new Uint8Array(32); crypto.getRandomValues(r);
+    memToken = btoa(String.fromCharCode.apply(null, r)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    try { localStorage.setItem(TOKEN_KEY, memToken); } catch (e) {}
+    return memToken;
+  }
   const SESSION_KEY = "iknow:session";
   const getSession = () => { try { return localStorage.getItem(SESSION_KEY) || ""; } catch (e) { return ""; } };
   const setSession = (v) => { try { v ? localStorage.setItem(SESSION_KEY, v) : localStorage.removeItem(SESSION_KEY); } catch (e) {} };
@@ -99,6 +109,65 @@
     }));
   }
 
+
+  /* Owner-managed access: ask, wait for approval, or see that access was switched off. */
+  function askAccess(state) {
+    return access().then((info) => new Promise((resolve) => {
+      const hi = (document.documentElement.lang === "hi");
+      const L = hi ? {
+        needH: "IKnOw सिर्फ़ न्योते पर है", needP: "इस फ़ोन से पहुँच माँगिए। ऐप चलाने वाले के मंज़ूर करते ही जवाब आने लगेंगे। आपकी बात सेव है।",
+        nameL: "आपका नाम (ताकि उन्हें पता चले कि आप हैं)", ask: "पहुँच माँगें",
+        waitH: "मंज़ूरी का इंतज़ार", waitP: "आपकी माँग भेज दी गई है। मंज़ूर होते ही जवाब आने लगेंगे। आपकी बात सेव है।",
+        nudge: "WhatsApp पर उन्हें बता दें", check: "फिर देखें",
+        revH: "पहुँच बंद है", revP: "ऐप चलाने वाले ने इस फ़ोन की पहुँच बंद कर दी है। आपकी बात सेव है।", again: "फिर से माँगें",
+        close: "बंद करें", fail: "माँग नहीं भेजी जा सकी। कनेक्शन देखकर फिर कोशिश करें।", busy: "अभी बहुत माँगें आ रही हैं। थोड़ी देर बाद कोशिश करें।",
+        msg: (n) => "नमस्ते, मैंने अपने फ़ोन से IKnOw की पहुँच माँगी है" + (n ? " (" + n + ")" : "") + "।"
+      } : {
+        needH: "IKnOw is invite-only", needP: "Ask for access from this phone. Replies start as soon as the owner approves it. Your entry is saved.",
+        nameL: "Your name (so they know it's you)", ask: "Ask for access",
+        waitH: "Waiting for approval", waitP: "Your request has been sent. Replies start as soon as the owner approves it. Your entry is saved.",
+        nudge: "Let them know on WhatsApp", check: "Check now",
+        revH: "Access is switched off", revP: "The owner has switched off access for this phone. Your entry is saved.", again: "Ask again",
+        close: "Close", fail: "Couldn't send the request. Check your connection and try again.", busy: "Too many requests right now. Try again a little later.",
+        msg: (n) => "Hi, I've asked for IKnOw access from my phone" + (n ? " (" + n + ")" : "") + "."
+      };
+      const wrap = document.createElement("div");
+      wrap.className = "layer open"; wrap.style.zIndex = "60";
+      document.body.appendChild(wrap);
+      const done = (v) => { wrap.remove(); resolve(v); };
+      const NAME_KEY = "iknow:request-name";
+      const getName = () => { try { return localStorage.getItem(NAME_KEY) || ""; } catch (e) { return ""; } };
+      const card = (h, inner, acts) => { wrap.innerHTML = `<div class="scrim"></div><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="axH"><h3 id="axH">${h}</h3><div class="dbody">${inner}</div><div class="acts">${acts}</div></div>`; };
+      const showWait = () => {
+        const wa = info.whatsapp ? "https://wa.me/" + info.whatsapp + "?text=" + encodeURIComponent(L.msg(getName())) : "";
+        card(L.waitH, `<p id="axMsg">${L.waitP}</p>${wa ? `<p><a class="btn btn-secondary" id="axNudge" href="${esc(wa)}" target="_blank" rel="noopener">${L.nudge}</a></p>` : ""}`,
+          `<button class="btn btn-secondary" type="button" id="axClose">${L.close}</button><button class="btn btn-primary" type="button" id="axCheck">${L.check}</button>`);
+        wrap.querySelector("#axClose").onclick = () => done(null);
+        wrap.querySelector("#axCheck").onclick = () => done("retry");
+      };
+      const showAsk = (h, p, btn) => {
+        card(h, `<p>${p}</p><label class="flabel" for="axName">${L.nameL}</label><input class="field" id="axName" maxlength="40" autocomplete="name" value="${esc(getName())}"><p id="axErr" style="color:var(--danger)"></p>`,
+          `<button class="btn btn-secondary" type="button" id="axClose">${L.close}</button><button class="btn btn-primary" type="button" id="axAsk">${btn}</button>`);
+        wrap.querySelector("#axClose").onclick = () => done(null);
+        wrap.querySelector("#axAsk").onclick = async () => {
+          const b = wrap.querySelector("#axAsk"); b.disabled = true;
+          const name = wrap.querySelector("#axName").value.trim().slice(0, 40);
+          try { localStorage.setItem(NAME_KEY, name); } catch (e) {}
+          try {
+            const r = await fetch(info.accessUrl, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "request", token: deviceToken(), label: name }) });
+            const d = await r.json().catch(() => ({}));
+            if (r.ok && d.status === "active") { done("retry"); return; }
+            if (r.ok) { showWait(); return; }
+            wrap.querySelector("#axErr").textContent = r.status === 429 ? L.busy : L.fail; b.disabled = false;
+          } catch (e) { wrap.querySelector("#axErr").textContent = L.fail; b.disabled = false; }
+        };
+      };
+      if (state === "pending") showWait();
+      else if (state === "revoked") showAsk(L.revH, L.revP, L.again);
+      else showAsk(L.needH, L.needP, L.ask);
+    }));
+  }
+
   async function call(input, opts, json, retried) {
     opts = opts || {};
     if (opts.signal && opts.signal.aborted) throw { code: "cancelled", message: "cancelled" };
@@ -106,7 +175,7 @@
     try {
       res = await fetch("/api/sample", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-iknow-code": getCode(), "x-iknow-device": deviceId(), "x-iknow-session": getSession() },
+        headers: { "content-type": "application/json", "x-iknow-code": getCode(), "x-iknow-device": deviceId(), "x-iknow-session": getSession(), "x-iknow-token": deviceToken() },
         body: JSON.stringify({ input, json: !!json, modelTier: opts.modelTier || "default" }),
         signal: opts.signal,
       });
@@ -116,6 +185,12 @@
     }
     let data = {};
     try { data = await res.json(); } catch (e) {}
+    if (res.status === 401 && ["needs_access", "pending", "access_revoked"].includes(data.code)) {
+      if ((retried || 0) >= 4) throw { code: data.code, message: "no access yet" };
+      const next = await askAccess(data.code === "access_revoked" ? "revoked" : data.code);
+      if (next !== "retry") throw { code: data.code, message: "no access yet" };
+      return call(input, opts, json, (retried || 0) + 1);
+    }
     if (res.status === 401 && getSession()) setSession("");      // a switched-off or stale session: fall back to asking
     if (res.status === 401 && (data.code === "needs_code" || data.code === "revoked") && (retried || 0) < 3) {
       const c = await askCode(!!getCode() || (retried || 0) > 0, data.code);

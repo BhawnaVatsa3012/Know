@@ -6,5 +6,6 @@ module.exports = function handler(req, res) {
   const whatsapp = String(process.env.IKNOW_REQUEST_WHATSAPP || "").replace(/\D/g, "");
   const email = String(process.env.IKNOW_REQUEST_EMAIL || "").trim();
   const links = mode === "device" && !!process.env.BLOB_READ_WRITE_TOKEN;
-  res.status(200).json({ mode, links, whatsapp: mode === "device" ? whatsapp : "", email: mode === "device" ? email : "" });
+  const accessUrl = process.env.IKNOW_ACCESS_URL || "https://wijnzuwcluzalvpobpbr.supabase.co/functions/v1/iknow-access";
+  res.status(200).json({ mode, links, accessUrl, whatsapp, email });
 };
