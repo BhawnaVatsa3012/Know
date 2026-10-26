@@ -1,4 +1,4 @@
-// IKnOw reply endpoint (Vercel serverless function).
+// Dear Mann reply endpoint (Vercel serverless function).
 // The browser sends the prompt here; this function adds the Anthropic API key
 // (kept only in Vercel's environment) and calls the Claude Messages API.
 // Nothing the person writes is logged or stored here. On an API error, only the
@@ -108,7 +108,7 @@ module.exports = async function handler(req, res) {
         max_tokens: quick ? 600 : 1500,
         system: body.json
           ? "You are a careful assistant inside a private diary app. Reply with only the JSON value the user asks for, no prose."
-          : "You are the writing engine of IKnOw, a private diary app for adults. Follow the user's instructions exactly.",
+          : "You are the writing engine of Dear Mann, a private diary app for adults. Follow the user's instructions exactly.",
         messages,
       }),
     });

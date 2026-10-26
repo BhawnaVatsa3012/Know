@@ -1,4 +1,4 @@
-// Tells the app which kind of access this IKnOw uses, and where to send access requests.
+// Tells the app which kind of access this Dear Mann uses, and where to send access requests.
 // Holds no secrets: the owner's WhatsApp number / email are what the owner chose to show to invitees.
 const ACCESS_URL = process.env.IKNOW_ACCESS_URL || "https://wijnzuwcluzalvpobpbr.supabase.co/functions/v1/iknow-access?forceFunctionRegion=ap-south-1";
 

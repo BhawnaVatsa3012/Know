@@ -1,4 +1,4 @@
-# IKnOw
+# Dear Mann
 
 A private diary that writes back. You choose who you need right now (Dear diary, Best friend, Spouse, Mom, or "You decide"), write, and get a short reply in that voice, ending with a handwritten *"I know."*
 
@@ -41,7 +41,7 @@ The function also limits each IP address to 20 requests a minute (best effort).
 Access is managed by a small service (Supabase Edge Function `iknow-access`, source in `supabase/functions/iknow-access/`) with its own private database schema `iknow`.
 
 1. **Owner account.** The first time, open **`/owner`** and create your username and password. To prove it's you, it checks your current `IKNOW_ACCESS_CODE` (read from your phone automatically if you've used the app there). Only a PBKDF2 hash of the password is stored.
-2. **People ask from the app.** A new phone sees "IKnOw is invite-only", types their name, and taps **Ask for access** (optionally nudging you on WhatsApp if `IKNOW_REQUEST_WHATSAPP` is set).
+2. **People ask from the app.** A new phone sees "Dear Mann is invite-only", types their name, and taps **Ask for access** (optionally nudging you on WhatsApp if `IKNOW_REQUEST_WHATSAPP` is set).
 3. **You tap Approve, Decline, Switch off or Turn back on** on `/owner`. It takes effect on that phone within about 30 seconds. No Vercel settings, no redeploys.
 
 Once the owner account exists, the shared invite code no longer gives anyone access; it is only used as a fallback if the access service is unreachable. Stored per phone: a hash of a random token made by that browser, the name they typed, status and dates. No diary text.
@@ -81,4 +81,4 @@ python3 build.py
 ## Help lines shown in the app
 
 Tele-MANAS 14416 / 1-800-891-4416 (India, free, 24×7) and emergency 112.
-IKnOw is not therapy, medical, legal or emergency advice.
+Dear Mann is not therapy, medical, legal or emergency advice.

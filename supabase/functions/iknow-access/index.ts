@@ -1,4 +1,4 @@
-// IKnOw access service (Supabase Edge Function "iknow-access").
+// Dear Mann access service (Supabase Edge Function "iknow-access").
 // Keeps the list of phones that asked for access, the owner's decision for each,
 // and the owner's account. Stores no diary text. Phones are known only by a hash
 // of a random token their browser made, plus an optional name the person typed.

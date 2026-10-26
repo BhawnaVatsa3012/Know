@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>IKnOw owner</title>
+<title>Dear Mann owner</title>
 <style>
   :root { --bg:#16140F; --card:#201D17; --ink:#F2EDE4; --muted:#B4AC9F; --rule:#3A352C; --gold:#D6A75A; --danger:#E58B7B; --ok:#9CC59A; }
   @media (prefers-color-scheme: light) { :root { --bg:#FAF7F1; --card:#FFFFFF; --ink:#201F1D; --muted:#5E5850; --rule:#DDD6CA; --gold:#9A6A22; --danger:#B4402F; --ok:#2E7A3A; } }
@@ -39,8 +39,8 @@
 </head>
 <body>
 <main>
-  <header><h1>IKn<b>O</b>w owner</h1><button class="quiet" id="out" type="button" hidden>Sign out</button></header>
-  <p class="sub" id="sub">Approve or switch off the phones that use your IKnOw.</p>
+  <header><h1>Dear <b>M</b>ann owner</h1><button class="quiet" id="out" type="button" hidden>Sign out</button></header>
+  <p class="sub" id="sub">Approve or switch off the phones that use your Dear Mann.</p>
 
   <section id="vLoad" class="card"><p class="empty" id="loadMsg">Loading…</p></section>
 
@@ -108,7 +108,7 @@
   }
   const show = (v) => ["vLoad", "vClaim", "vLogin", "vDash"].forEach((x) => { $(x).hidden = x !== v; });
   const MSG = { bad_login: "That username and password don't match.", rate_limited: "Too many tries. Wait 15 minutes, then try again.",
-    bad_invite: "That invite code doesn't match the one set for this IKnOw.", weak_password: "Use at least 8 characters.",
+    bad_invite: "That invite code doesn't match the one set for this Dear Mann.", weak_password: "Use at least 8 characters.",
     bad_username: "Use at least 3 characters for the username.", already_claimed: "An owner account already exists. Sign in instead.",
     signed_out: "You've been signed out. Sign in again.", unavailable: "Something went wrong. Try again in a moment.", net: "No connection. Try again." };
   const msg = (code) => MSG[code] || MSG.unavailable;
@@ -136,7 +136,7 @@
     fill("lActive", by("active"), "No phones yet.");
     fill("lRevoked", by("revoked"), "None.");
     const n = by("pending").length; $("nPending").hidden = !n; $("nPending").textContent = n;
-    document.title = (n ? "(" + n + ") " : "") + "IKnOw owner";
+    document.title = (n ? "(" + n + ") " : "") + "Dear Mann owner";
   }
   async function refresh() {
     try {
