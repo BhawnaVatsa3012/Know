@@ -17,6 +17,15 @@ marker = "\n<script>\n(function(){"
 must(src.count(marker) == 1, "main script marker not found exactly once")
 src = src.replace(marker, '\n<script src="/standalone.js"></script>' + marker, 1)
 
+# 1b. Home-screen and tab icons. With Hide on, they switch to the calculator (spec §2, disguise icon).
+icons = """<link rel="icon" href="/icons/favicon-32.png" sizes="32x32" id="favIcon">
+<link rel="apple-touch-icon" href="/icons/icon-180.png" id="touchIcon">
+<meta name="theme-color" content="#161413">
+<script>window.__setIcon=function(h){var f=document.getElementById("favIcon"),a=document.getElementById("touchIcon");if(f)f.href=h?"/icons/calc-192.png":"/icons/favicon-32.png";if(a)a.href=h?"/icons/calc-180.png":"/icons/icon-180.png";};</script>
+"""
+must(src.count("<title>Dear Mann</title>") == 1, "title not found exactly once")
+src = src.replace("<title>Dear Mann</title>", "<title>Dear Mann</title>\n" + icons, 1)
+
 # 2. Truthful wording when running on its own (storage on this phone, replies via the API).
 overrides = r'''
 if(window.IKNOW_STANDALONE){

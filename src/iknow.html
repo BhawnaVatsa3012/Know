@@ -6,7 +6,7 @@
 <title>Dear Mann</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Lora:wght@400;600&family=Nothing+You+Could+Do&family=Kalam&family=Noto+Serif+Devanagari:wght@400;600&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Nothing+You+Could+Do&family=Kalam&family=Noto+Serif+Devanagari:wght@400;600&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 /* ================= tokens (design spec §2) ================= */
@@ -20,6 +20,8 @@
   --spouse:#ec9d89; --spouse-t:#ec9d89;
   --mom:#e6a0ba;    --mom-t:#e6a0ba;
   --decide:#b1b1e9; --decide-t:#b1b1e9;
+  --focus:#e1ad66; --danger-wash:#2a1d1a; --success:#8fc48c; --success-wash:#1b231a; --scrim:rgba(8,7,6,.72);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.40); --shadow-md:0 6px 16px rgba(0,0,0,.45); --shadow-lg:0 12px 32px rgba(0,0,0,.50);
   color-scheme:dark;
 }
 [data-theme="light"] {
@@ -32,6 +34,8 @@
   --spouse:#b75644; --spouse-t:#8f392a;
   --mom:#ad567b;    --mom-t:#863a5b;
   --decide:#6c68a9; --decide-t:#504c8a;
+  --focus:#7d5411; --danger-wash:#f6e7e4; --success:#2f6b36; --success-wash:#e6efe5; --scrim:rgba(32,31,29,.40);
+  --shadow-sm:0 1px 2px rgba(32,31,29,.08); --shadow-md:0 4px 12px rgba(32,31,29,.10); --shadow-lg:0 12px 32px rgba(32,31,29,.14);
   color-scheme:light;
 }
 @media (prefers-color-scheme: light){
@@ -43,6 +47,8 @@
     --diary:#aa732b;  --diary-t:#784e14; --friend:#298787; --friend-t:#115e5e;
     --spouse:#b75644; --spouse-t:#8f392a; --mom:#ad567b; --mom-t:#863a5b;
     --decide:#6c68a9; --decide-t:#504c8a; color-scheme:light;
+    --focus:#7d5411; --danger-wash:#f6e7e4; --success:#2f6b36; --success-wash:#e6efe5; --scrim:rgba(32,31,29,.40);
+    --shadow-sm:0 1px 2px rgba(32,31,29,.08); --shadow-md:0 4px 12px rgba(32,31,29,.10); --shadow-lg:0 12px 32px rgba(32,31,29,.14);
   }
 }
 :root {
@@ -54,6 +60,7 @@
   --radius-sm:2px; --radius-md:4px; --radius-lg:7px; --radius-bubble:16px 16px 16px 6px;
   --tap:48px; --tap-safety:64px;
   --ease:cubic-bezier(.4,0,.2,1); --dur:240ms;
+  --ease-out:cubic-bezier(.2,0,0,1); --ease-breath:cubic-bezier(.45,0,.55,1); --dur-press:120ms; --dur-sheet:400ms;
 }
 [data-voice="diary"]  { --v:var(--diary);  --vt:var(--diary-t); }
 [data-voice="friend"] { --v:var(--friend); --vt:var(--friend-t); }
@@ -80,8 +87,9 @@ a{color:inherit}
 .view{display:none}
 .top{display:flex;align-items:center;gap:4px;height:56px;margin:0 calc(-1*var(--space-2))}
 .top .sp,.phead .sp{flex:1}
-.wm{font:400 26px/1 var(--fh);letter-spacing:.01em;padding-left:var(--space-2)}
-.wm span{color:var(--gold-t)}
+.wm{display:inline-flex;align-items:center;color:var(--ink);padding-left:var(--space-2);line-height:0}
+.wm svg{display:block;width:var(--wmw,112px);height:auto}
+.wm.sm .swash{display:none} /* spec §2: below 140px the swash is dropped */
 .kicker{font:400 12.5px/1.4 var(--fb);letter-spacing:.1em;text-transform:uppercase;font-feature-settings:'tnum';color:var(--muted);margin:var(--space-4) 0 var(--space-1)}
 .kicker.gold{color:var(--gold-t)}
 .display{font:400 32px/1.15 var(--fh);margin:0 0 var(--space-6);text-wrap:balance}
@@ -145,9 +153,10 @@ a{color:inherit}
 /* ================= diary page ================= */
 #chat{min-height:100dvh;padding-bottom:150px;margin:0 calc(-1*var(--space-4));padding-left:var(--space-4);padding-right:var(--space-4)}
 #chat.page[data-voice]{background:color-mix(in oklab,var(--v) 7%,var(--bg))}
-.phead{display:flex;align-items:center;gap:8px;height:56px;border-bottom:1px solid var(--line);margin:0 calc(-1*var(--space-2));padding:0 var(--space-1)}
-.pnames{display:flex;flex-direction:column;min-width:0;line-height:1.15}
-.pname{font:600 21px/1.15 var(--fh);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phead{display:flex;align-items:center;gap:8px;min-height:56px;border-bottom:1px solid var(--line);margin:0 calc(-1*var(--space-2));padding:0 var(--space-1)}
+.pnames{display:flex;flex-direction:column;min-width:0;line-height:1.15;flex:1 1 120px}
+#chat>.phead{flex-wrap:wrap;row-gap:2px;padding-bottom:4px} #chat>.phead #pageBreathe,#chat>.phead #delDay{order:1} #chat>.phead .seg{order:2;margin-left:auto}
+.pname{font:600 21px/1.1 var(--fh);overflow-wrap:break-word} /* labels wrap, never truncate (spec §5) */
 .prole{font-size:13px;color:var(--muted)}
 .phead .seg button{min-height:36px;padding:0 10px;font-size:13px}
 .ptitle{font:600 21px/1.15 var(--fh);margin:0}
@@ -214,8 +223,14 @@ a{color:inherit}
 .safety .keep{font-size:14px;color:var(--faint);text-align:center}
 
 /* notes / nudges / cards */
-.note{font-size:14.5px;color:var(--muted);border-left:2px solid var(--line2);padding:2px 0 2px 12px;margin:0 0 var(--space-4)}
-.note .retry{margin-left:8px}
+.note{display:flex;gap:12px;align-items:flex-start;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line2);border-radius:var(--radius-md);padding:14px 16px;margin:0 0 var(--space-4)}
+.note>svg.i{color:var(--muted);margin-top:3px}
+.note .ntext{flex:1;display:flex;flex-direction:column;gap:2px}
+.note .ntext small{color:var(--muted);font-size:14px}
+.note .retry{align-self:flex-start;margin:6px 0 0 -12px;min-height:44px}
+.writing{display:flex;flex-direction:column;gap:8px;color:var(--muted);font-size:14px;margin:0}
+.writing i{display:block;height:1.5px;width:64px;background:var(--v,var(--gold));transform-origin:left;animation:drawline 1.6s var(--ease) infinite}
+@keyframes drawline{0%{transform:scaleX(0);opacity:1}70%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
 .nudge,.card{border:1px solid var(--line);border-radius:var(--radius-md);padding:16px 18px;margin:0 0 var(--space-4)}
 .nudge{color:var(--muted);font-size:15px}
 .nudge p{margin:0 0 8px}
@@ -237,20 +252,24 @@ select.field{appearance:auto}
 /* ================= screens (layers) ================= */
 .layer{position:fixed;inset:0;z-index:10;display:none}
 .layer.open{display:block}
-.scrim{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.layer.open>.dialog,.layer.open>.panel,.layer.open .sheet{animation:rise var(--dur-sheet) var(--ease-out) both}
+@keyframes rise{from{opacity:0;transform:translate(var(--tx,0),calc(var(--ty,0px) + 12px))}to{opacity:1;transform:translate(var(--tx,0),var(--ty,0px))}}
 .screen{background:var(--bg);overflow-y:auto}
 .screen>.panel{max-width:430px;margin:0 auto;padding:0 var(--space-4) calc(var(--space-8) + env(safe-area-inset-bottom,0px));min-height:100%}
 .screen .phead{position:sticky;top:0;background:var(--bg);z-index:2}
 
 /* dialog */
-.dialog{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,calc(100vw - 32px));max-height:88dvh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px;box-shadow:0 12px 32px rgba(0,0,0,.45)}
-.dialog h3{font:600 22px/1.25 var(--fh);margin:0 0 8px}
+.dialog{--tx:-50%;--ty:-50%;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,calc(100vw - 48px));max-height:88dvh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);padding:22px 20px 18px;box-shadow:var(--shadow-lg)}
+.dialog h3{font:600 22px/1.2 var(--fh);margin:0 0 8px}
 .dialog .dbody,.dialog .dbody p{font-size:14.5px;color:var(--muted);margin:0 0 10px}
 .dialog .acts{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:var(--space-4)}
 .dialog .acts .btn{min-height:48px;font-size:18px}
-.dialog.signup{inset:0;left:0;top:0;transform:none;width:100%;max-height:none;height:100%;border:0;border-radius:0;box-shadow:none;background:var(--bg);padding:0}
-.dialog.signup .su{max-width:430px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-8)}
-.dialog.signup .display{margin:var(--space-6) 0 var(--space-2)}
+.dialog.signup{--tx:0;--ty:0;inset:0;left:0;top:0;transform:none;width:100%;max-height:none;height:100%;border:0;border-radius:0;box-shadow:none;background:var(--bg);padding:0}
+.dialog.signup .su{max-width:430px;margin:0 auto;padding:var(--space-8) var(--space-4) var(--space-8)}
+.dialog.signup .wm{--wmw:150px;padding:0}
+.dialog.signup h3.display{font:400 34px/1.15 var(--fh);letter-spacing:-.01em;margin:26px 0 var(--space-2)}
+[lang="hi"] .dialog.signup h3.display{font-size:30px;line-height:1.35}
 .dialog.signup .lead{color:var(--muted);margin:0 0 var(--space-6)}
 .dialog.signup .btn-primary{width:100%;margin-top:var(--space-6)}
 .flabel{display:block;font-size:15px;color:var(--muted);margin:var(--space-4) 0 var(--space-2)}
@@ -375,16 +394,37 @@ details.about summary{cursor:pointer;min-height:48px;display:flex;align-items:ce
 #lock{position:fixed;inset:0;z-index:30;background:var(--bg);display:grid;place-items:center;padding:20px}
 #lock[hidden]{display:none}
 .lockbox{text-align:center;max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:var(--space-3)}
-.lockbox .wm{font-size:34px;padding:0}
-.lockbox h2{font:400 26px/1.2 var(--fh);margin:var(--space-4) 0 0}
-#lockErr{min-height:1.4em;color:var(--danger);font-size:14.5px;margin:0}
+.lockbox .wm{padding:0;--wmw:140px}
+.lockbox h2{font:400 28px/1.15 var(--fh);letter-spacing:-.01em;margin:var(--space-4) 0 0}
+.lockbox .lsub{margin:0;color:var(--muted);font-size:14px}
+#lockErr{min-height:1.4em;color:var(--danger);font-size:14px;margin:0}
+.lockbox .pinwrap.shake{animation:shake 240ms var(--ease) 3}
+.lockbox .pinwrap.bad .pinboxes i{border:1.5px solid var(--danger)}
+.lockbox .pinwrap.ok .pinboxes i{border:1.5px solid var(--success)}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.keypad{display:grid;grid-template-columns:repeat(3,72px);gap:14px 22px;justify-content:center;margin-top:var(--space-4)}
+.keypad button{font-variant-numeric:lining-nums tabular-nums;width:72px;height:72px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font:400 30px/1 var(--fh);font-feature-settings:'tnum';display:grid;place-items:center;touch-action:manipulation;transition:background var(--dur-press) var(--ease)}
+.keypad button:active{background:color-mix(in oklab,var(--ink) 14%,transparent)}
+.keypad button:disabled{opacity:.45}
+.keypad .blank{visibility:hidden}
+.keypad .kdel{border:0}
+@media (max-height:700px){ .keypad{grid-template-columns:repeat(3,60px);gap:10px 20px} .keypad button{width:60px;height:60px;font-size:26px} }
 
-/* breathing */
-#breathe .dialog{text-align:center}
-.circle{width:160px;height:160px;border-radius:50%;margin:20px auto;border:1.5px solid var(--gold);background:color-mix(in oklab,var(--gold) 10%,transparent);transform:scale(.55);transition:transform 4s ease-in-out}
+/* breathing (spec §4.6): full screen, in 4 · hold 2 · out 6 */
+#breathe{background:var(--bg)}
+#breathe[data-voice]{background:color-mix(in oklab,var(--v) 7%,var(--bg))}
+.bscreen{max-width:430px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:8px var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom,0px))}
+.bscreen .btop{height:56px;display:flex;align-items:center;margin:0 calc(-1*var(--space-2))}
+.bmid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:var(--space-3)}
+.circle{width:min(240px,62vw);aspect-ratio:1;border-radius:50%;border:1.5px solid var(--v,var(--gold));display:grid;place-items:center;transform:scale(.62);transition:transform 4s var(--ease-breath)}
+.circle::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--v,var(--gold))}
 .circle.in{transform:scale(1)}
-.circle.out{transform:scale(.55);transition-duration:6s}
-.bword{font:400 26px/1.3 var(--fh);margin:0}
+.circle.hold{transform:scale(1);transition-duration:0s}
+.circle.out{transform:scale(.62);transition-duration:6s}
+.bword{font:400 28px/1.15 var(--fh);margin:var(--space-6) 0 0}
+#bleft{font-size:12.5px;color:var(--faint);font-feature-settings:'tnum';margin:0}
+.bdone{display:flex;flex-direction:column;gap:10px;width:100%}
+.bdone h2{font:600 24px/1.2 var(--fh);margin:0 0 var(--space-3)}
 
 /* ================= calculator disguise (no Dear Mann fonts, colors or words) ================= */
 #veil{--c-bg:#0f1011;--c-key:#262729;--c-fn:#3a3c3f;--c-op:#2e3a46;--c-opt:#bcd4ee;--c-eq:#bcd4ee;--c-eqt:#0f1d2b;--c-ink:#eceff2;--c-muted:#9aa1a8;
@@ -408,28 +448,156 @@ details.about summary{cursor:pointer;min-height:48px;display:flex;align-items:ce
 .keys button:active{filter:brightness(1.25)}
 .keys button:focus-visible,.c-bar button:focus-visible{outline:2px solid var(--c-opt);outline-offset:2px}
 
+/* ================= mood grounds (spec §8.4): the mood owns the ground, the person owns the strokes ================= */
+[data-theme="dark"] [data-mood="Low"]    { --bg:#0e1523; --surface:#161c29; }
+[data-theme="dark"] [data-mood="Anxious"]{ --bg:#0a190e; --surface:#121f15; }
+[data-theme="dark"] [data-mood="Angry"]  { --bg:#03181d; --surface:#0b1f24; }
+[data-theme="dark"] [data-mood="Tired"]  { --bg:#19111f; --surface:#201825; }
+[data-theme="dark"] [data-mood="Okay"]   { --bg:#181411; --surface:#1e1b18; }
+[data-theme="dark"] [data-mood="Happy"]  { --bg:#1c1305; --surface:#221a0d; }
+[data-theme="light"] [data-mood="Low"]    { --bg:#eef4ff; --surface:#e6ebf6; }
+[data-theme="light"] [data-mood="Anxious"]{ --bg:#ecf7ee; --surface:#e4eee6; }
+[data-theme="light"] [data-mood="Angry"]  { --bg:#e8f6fa; --surface:#e0eef2; }
+[data-theme="light"] [data-mood="Tired"]  { --bg:#f7f1fc; --surface:#eee8f3; }
+[data-theme="light"] [data-mood="Okay"]   { --bg:#f4f3f2; --surface:#ecebea; }
+[data-theme="light"] [data-mood="Happy"]  { --bg:#f9f3e8; --surface:#f1eae0; }
+@media (prefers-color-scheme: dark){
+  [data-theme="system"] [data-mood="Low"]{--bg:#0e1523;--surface:#161c29} [data-theme="system"] [data-mood="Anxious"]{--bg:#0a190e;--surface:#121f15}
+  [data-theme="system"] [data-mood="Angry"]{--bg:#03181d;--surface:#0b1f24} [data-theme="system"] [data-mood="Tired"]{--bg:#19111f;--surface:#201825}
+  [data-theme="system"] [data-mood="Okay"]{--bg:#181411;--surface:#1e1b18} [data-theme="system"] [data-mood="Happy"]{--bg:#1c1305;--surface:#221a0d}
+}
+@media (prefers-color-scheme: light){
+  [data-theme="system"] [data-mood="Low"]{--bg:#eef4ff;--surface:#e6ebf6} [data-theme="system"] [data-mood="Anxious"]{--bg:#ecf7ee;--surface:#e4eee6}
+  [data-theme="system"] [data-mood="Angry"]{--bg:#e8f6fa;--surface:#e0eef2} [data-theme="system"] [data-mood="Tired"]{--bg:#f7f1fc;--surface:#eee8f3}
+  [data-theme="system"] [data-mood="Okay"]{--bg:#f4f3f2;--surface:#ecebea} [data-theme="system"] [data-mood="Happy"]{--bg:#f9f3e8;--surface:#f1eae0}
+}
+#chat.page[data-mood]{background:var(--bg)}
+#chat.page{transition:background-color 1.2s var(--ease)}
+body{transition:background-color 1.2s var(--ease)}
+html{font-synthesis-weight:none} /* Tiro Devanagari has one weight; never fake bold (spec §1.4: bold is never used) */
+.pinboxes,#bleft,.count,.stepn{font-variant-numeric:lining-nums tabular-nums}
+.pmood{padding:var(--space-3) 0 var(--space-3);border-bottom:1px solid var(--line)}
+.pmood p{margin:0 0 var(--space-2);font-size:14px;color:var(--muted)}
+.pmood .chips{flex-wrap:nowrap;margin-right:calc(-1*var(--space-4));padding-right:var(--space-4)}
+
+/* ================= Home (spec §8.2, option 2a) ================= */
+#picker .display{font:400 31px/1.15 var(--fh);letter-spacing:-.01em;margin:0 0 var(--space-4)}
+[lang="hi"] #picker .display{font-size:28px;line-height:1.35}
+#picker .kicker#today{color:var(--gold-t)}
+.wtlabel{display:block;font-size:14px;color:var(--muted);margin:0 0 8px}
+.wtwrap{position:relative}
+.wt{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:0 14px 0 16px;border:1px solid var(--line2);border-radius:var(--radius-md);background:transparent;color:var(--ink);text-align:left;transition:border-color var(--dur) var(--ease)}
+.wt[aria-expanded="true"]{border:1.5px solid var(--gold);padding-left:15.5px}
+.wt .wtn{font:600 20px/1.2 var(--fh)} .wt .wtr{font-size:13px;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wt svg.i{color:var(--muted)}
+.ruled{display:block;width:100%;min-height:calc(34px * 8 + 2px);margin:var(--space-4) 0 0;padding:0 2px;border:0;border-top:1px solid var(--line);background:transparent;resize:none;
+  font:400 17px/34px var(--fb);color:var(--ink);background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 33px,var(--line) 33px,var(--line) 34px);background-attachment:local}
+.ruled::placeholder{color:var(--faint)}
+.ruled:focus{outline:none}
+.ruled:focus-visible{outline:none;box-shadow:0 1px 0 0 var(--gold)}
+.homefoot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:var(--space-3) 0 var(--space-4)}
+.homefoot .btn-ghost{padding:0 12px 0 4px;font-size:17px}
+.homefoot .btn-ghost svg.i{color:var(--gold-t)}
+.todayline{font-size:14.5px;color:var(--muted);margin:0 0 var(--space-4)}
+
+/* Writing-to menu */
+.wtmenu-scrim{position:fixed;inset:0;z-index:20;background:rgba(8,7,6,.55)}
+[data-theme="light"] .wtmenu-scrim{background:rgba(32,31,29,.30)}
+.wtmenu{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:21;background:var(--surface);border:1px solid var(--line2);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);padding:6px 0;max-height:min(70dvh,560px);overflow:auto;animation:rise 240ms var(--ease-out) both}
+.wtmenu .mk{font:400 12.5px/1.4 var(--fb);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:10px 16px 4px;margin:0}
+[lang="hi"] .wtmenu .mk{letter-spacing:0;text-transform:none}
+.wtmenu hr{border:0;border-top:1px solid var(--line);margin:6px 0}
+.mi{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:6px 16px;border:0;background:transparent;color:var(--ink);text-align:left;transition:background var(--dur-press) var(--ease)}
+.mi:hover,.mi:focus-visible{background:color-mix(in oklab,var(--ink) 7%,transparent)}
+.mi:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.mi.grp{min-height:52px}
+.mi.person{min-height:58px}
+.mi .mn{font:600 19px/1.2 var(--fh)} .mi .mr{font-size:13px;color:var(--muted)}
+.mi .mtext{flex:1;display:flex;flex-direction:column;min-width:0}
+.mi .mtext.inline{flex-direction:row;align-items:baseline;gap:8px}
+.mi .count{font-size:13px;color:var(--muted);font-feature-settings:'tnum'}
+.mi>svg.i{color:var(--v,var(--muted))}
+.mi .tick{color:var(--gold-t)}
+.mi.add{color:var(--gold-t);font:600 18px/1.2 var(--fh)}
+.mi.add svg.i{color:var(--gold-t)}
+.mi.head{min-height:52px;padding-left:4px;border-bottom:1px solid var(--line)}
+.dot8{width:8px;height:8px;border-radius:50%;background:var(--v);flex:none}
+.dot8.decide{background:transparent;border:1.5px dashed var(--v)}
+.texts{display:inline-flex;align-items:center;gap:4px}
+.texts svg.i{width:13px;height:13px}
+
+/* Add someone (spec §8.3) */
+.addhead{display:flex;align-items:center;gap:8px;height:56px;margin:0 calc(-1*var(--space-2))}
+.addhead .ptitle{flex:1}
+.addhead .stepn{font-size:13px;color:var(--muted);font-feature-settings:'tnum';padding-right:var(--space-2)}
+#addBody h1{font:400 29px/1.15 var(--fh);letter-spacing:-.01em;margin:var(--space-3) 0 var(--space-4);text-wrap:balance}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.tile{display:flex;align-items:center;gap:10px;min-height:60px;padding:0 14px;border:1px solid var(--line2);border-radius:var(--radius-md);background:transparent;color:var(--ink);font:400 18px/1.2 var(--fh);text-align:left}
+.tile[aria-pressed="true"]{border:1.5px solid var(--v);background:color-mix(in oklab,var(--v) 10%,transparent)}
+.tile .tn{flex:1}
+.tile svg.i{color:var(--vt);width:18px;height:18px}
+.else{display:flex;align-items:center;gap:12px;width:100%;min-height:62px;margin:9px 0 0;padding:8px 14px 8px 16px;border:1px dashed var(--line2);border-radius:var(--radius-md);background:transparent;color:var(--ink);text-align:left}
+.else[aria-pressed="true"]{border:1.5px solid var(--v);background:color-mix(in oklab,var(--v) 10%,transparent)}
+.else .et{flex:1;display:flex;flex-direction:column} .else b{font:400 18px/1.2 var(--fh)} .else small{font-size:13.5px;color:var(--muted)}
+.helper{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin:8px 0 0}
+.rellist{list-style:none;margin:0;padding:0}
+.rellist li button{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:50px;border-bottom:1px solid var(--line);cursor:pointer}
+.rellist li button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.rellist .rn{font:400 18px/1.2 var(--fh)} .rellist .ra{font-size:13px;color:var(--muted);text-align:right}
+.gk{display:flex;align-items:center;gap:8px;font:400 12.5px/1.4 var(--fb);letter-spacing:.1em;text-transform:uppercase;color:var(--vt);margin:var(--space-4) 0 4px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+[lang="hi"] .gk{letter-spacing:0;text-transform:none}
+.howcard{display:block;border:1px solid var(--line2);border-radius:var(--radius-md);padding:14px 16px;margin:0 0 10px;cursor:pointer}
+.howcard:has(input:checked){border:1.5px solid var(--v)}
+.howcard .hrow{display:flex;gap:12px;align-items:flex-start}
+.howcard input{width:20px;height:20px;margin:3px 0 0;accent-color:var(--v);flex:none}
+.howcard b{font:400 20px/1.2 var(--fh);display:block;margin-bottom:4px}
+.howcard p{margin:0;font-size:14px;color:var(--muted)}
+.howcard .upbox{border:1px dashed var(--line2);border-radius:var(--radius-md);padding:14px;margin:12px 0 0 32px;text-align:center;font-size:12.5px;color:var(--muted)}
+.howcard .upbox b{font-size:17px;margin:4px 0 2px;color:var(--ink)}
+.howcard .bubble{margin:12px 0 0 32px;display:inline-block}
+.howcard .upbox{display:block} .howcard .upbox svg.i{display:block;margin:0 auto;color:var(--vt)} .howcard .upbox>span{display:block}
+.howcard .hrow>span{flex:1;min-width:0}
+.addfoot{margin-top:var(--space-6)}
+
+/* page empty state (spec §4.4) */
+.pempty{padding-top:var(--space-8)}
+.pempty h2{font:italic 400 24px/1.25 var(--fh);color:var(--muted);margin:0 0 var(--space-2)}
+.pempty p{font-size:14px;color:var(--faint);margin:0 0 var(--space-3)}
+.pmood[hidden]{display:none}
+.mi.head{gap:8px} .mi.head .icon-btn{color:var(--ink)} .mi.head .mn{font:600 19px/1.2 var(--fh)}
+.wt .mark{width:16px;height:16px}
+/* toast (spec §3.7) */
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);z-index:60;max-width:min(400px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line2);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);padding:12px 16px;font-size:15px;color:var(--ink);opacity:0;pointer-events:none;transition:opacity var(--dur) var(--ease),transform var(--dur) var(--ease)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.ok{color:var(--success)}
+#chat:has(.composer:not([hidden])) ~ .toast{bottom:96px}
 @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation:none !important;transition:none !important} }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="dm-wordmark" viewBox="0 0 572 180"><path fill="currentColor" d="M59.6 130.5L59.6 130.5Q56.3 130.5 51.4 130.1Q46.4 129.8 42.2 129.8L42.2 129.8Q38.4 129.8 34.8 129.9Q31.2 130 28.3 130L28.3 130Q28.1 130 28.1 129.3Q28.1 128.6 28.3 128.6L28.3 128.6Q32.9 128.6 35.2 128.0Q37.6 127.4 38.3 125.6Q39.1 123.8 39.1 120.3L39.1 120.3L39.1 64.7Q39.1 61.2 38.3 59.5Q37.6 57.8 35.3 57.1Q33 56.4 28.4 56.4L28.4 56.4Q28.2 56.4 28.2 55.7Q28.2 55 28.4 55L28.4 55Q31.3 55 34.9 55.2Q38.4 55.4 42.2 55.4L42.2 55.4Q46.1 55.4 50.5 55.1Q54.8 54.8 58.0 54.8L58.0 54.8Q70.8 54.8 80.4 59.6Q90 64.4 95.3 72.6Q100.7 80.9 100.7 91.2L100.7 91.2Q100.7 100.2 97.4 107.5Q94.2 114.8 88.5 119.9Q82.8 125.0 75.4 127.7Q67.9 130.5 59.6 130.5ZM58.4 128.9L58.4 128.9Q68.5 128.9 76.3 124.9Q84 120.9 88.4 113.0Q92.9 105.2 92.9 93.9L92.9 93.9Q92.9 83.3 88.7 74.9Q84.6 66.4 77.0 61.4Q69.5 56.3 59.0 56.3L59.0 56.3Q51.7 56.3 48.6 57.8Q45.5 59.3 45.5 65.0L45.5 65.0L45.5 119.0Q45.5 124.1 47.9 126.5Q50.4 128.9 58.4 128.9ZM132.4 131.4L132.4 131.4Q125.3 131.4 120.5 128.1Q115.8 124.8 113.4 119.6Q111 114.3 111 108.4L111 108.4Q111 101.1 114.4 95.3Q117.7 89.4 123.4 86.0Q129.1 82.6 135.8 82.6L135.8 82.6Q142.7 82.6 146.0 86.3Q149.4 90.0 149.4 96.3L149.4 96.3Q149.4 97.8 149.1 98.6Q148.8 99.3 148.0 99.3L148.0 99.3L142.3 99.3Q142.9 91.8 140.0 88.4Q137.0 85 132 85L132 85Q125.3 85 121.6 90.1Q117.8 95.2 117.8 104.1L117.8 104.1Q117.8 110.8 120 116.1Q122.2 121.5 126.4 124.5Q130.6 127.6 136.6 127.6L136.6 127.6Q140.8 127.6 143.5 126.3Q146.2 125.1 148.7 123.5L148.7 123.5Q148.9 123.3 149.3 123.8Q149.8 124.4 149.5 124.7L149.5 124.7Q145.3 128.3 141.1 129.9Q136.8 131.4 132.4 131.4ZM143.5 99.3L116.3 99.4L116.2 98.0L143.5 97.5L143.5 99.3ZM204.4 124.8L192 130.7Q191.5 131.0 191.0 131.0L191.0 131.0Q189.6 131.0 188.4 128.4Q187.2 125.9 187.2 121.1L187.2 121.1L187.2 98.0Q187.2 90.5 184.9 87.6Q182.5 84.8 179.0 84.8L179.0 84.8Q176.0 84.8 174.1 86.1Q172.1 87.5 171.1 89.6Q170.0 91.6 169.6 93.4L169.6 93.4Q169.3 94.6 168.7 96.2Q168.1 97.8 165.7 97.8L165.7 97.8Q163.9 97.8 163.0 96.8Q162.1 95.7 162.1 94.5L162.1 94.5Q162.1 92.4 164.3 90.3Q166.4 88.2 169.7 86.4Q173.0 84.6 176.6 83.6Q180.2 82.5 183.2 82.5L183.2 82.5Q188.2 82.5 190.4 85.7Q192.7 88.8 192.7 94.4L192.7 94.4L192.7 117.0Q192.7 121.4 193.7 123.3Q194.8 125.3 197.3 125.3L197.3 125.3Q199.6 125.3 203.9 123.5L203.9 123.5Q204.5 123.3 204.7 123.9Q205.0 124.6 204.4 124.8L204.4 124.8ZM170.8 130.8L170.8 130.8Q166.3 130.8 164.0 128.4Q161.6 125.9 161.6 122.7L161.6 122.7Q161.6 120.6 162.7 118.7Q163.7 116.8 166.3 115Q168.8 113.2 173.4 111.5L173.4 111.5L188.4 105.9L188.6 107.4L174.5 112.8Q172.0 113.8 170.6 114.9Q169.3 116.1 168.8 117.3Q168.4 118.6 168.4 119.9L168.4 119.9Q168.4 122.6 170.1 124.7Q171.8 126.9 175.2 126.9L175.2 126.9Q176.5 126.9 178.0 126.5Q179.4 126.0 181.4 124.8L181.4 124.8L189.5 120.2L189.7 121.6L180.7 127.2Q177.7 129.2 175.4 130Q173.2 130.8 170.8 130.8ZM221.4 97.5L221.4 97.5L220.9 96.3Q225.4 90.8 228.2 87.8Q231 84.9 233.0 83.7Q235.1 82.6 237 82.6L237 82.6Q239.5 82.6 241.9 83.9Q244.3 85.2 244.3 87.2L244.3 87.2Q244.3 88.4 243.4 89.3Q242.5 90.3 240.8 90.3L240.8 90.3Q239.4 90.3 238.4 89.4Q237.4 88.6 236.2 87.8Q235.0 87.0 232.9 87.0L232.9 87.0Q231.8 87.0 230.6 87.7Q229.3 88.4 227.2 90.6Q225.1 92.8 221.4 97.5ZM210.2 130L210.2 130Q209.9 130 209.9 129.3Q209.9 128.6 210.2 128.6L210.2 128.6Q215.2 128.6 216.6 127Q218.0 125.4 218.0 120.3L218.0 120.3L218.0 96.3Q218.0 92.2 217.1 90.3Q216.1 88.5 213.7 88.5L213.7 88.5Q212.5 88.5 210.8 89.0Q209.2 89.4 207 90.3L207 90.3Q206.5 90.4 206.2 89.8Q205.9 89.2 206.4 89.0L206.4 89.0L219.7 82.7Q220.0 82.6 220.3 82.6L220.3 82.6Q221.2 82.6 222.4 85.1Q223.7 87.5 223.7 92.2L223.7 92.2L223.7 120.3Q223.7 123.8 224.5 125.6Q225.4 127.4 227.9 128.0Q230.5 128.6 235.7 128.6L235.7 128.6Q236.0 128.6 236.0 129.3Q236.0 130 235.7 130L235.7 130Q232.8 130 229.0 129.9Q225.1 129.8 220.9 129.8L220.9 129.8Q217.9 129.8 215.1 129.9Q212.3 130 210.2 130ZM290.4 117.5L290.4 117.5L291.6 57.8L294.2 58L293.2 117.5Q293.0 123.6 295.1 126.1Q297.2 128.6 303.2 128.6L303.2 128.6Q303.5 128.6 303.5 129.3Q303.5 130 303.2 130L303.2 130Q300.6 130 297.8 129.9Q295.0 129.8 291.6 129.8L291.6 129.8Q288.7 129.8 286.1 129.9Q283.4 130 281.0 130L281.0 130Q280.8 130 280.8 129.3Q280.8 128.6 281.0 128.6L281.0 128.6Q286.1 128.6 288.2 126.1Q290.3 123.6 290.4 117.5ZM372.8 128.6L372.8 128.6Q373.2 128.6 373.2 129.3Q373.2 130 372.8 130L372.8 130Q370.0 130 366.4 129.9Q362.9 129.8 358.9 129.8L358.9 129.8Q355.2 129.8 352.1 129.9Q349.0 130 346.4 130L346.4 130Q346.2 130 346.2 129.3Q346.2 128.6 346.4 128.6L346.4 128.6Q352.4 128.6 354.2 127Q355.9 125.4 355.7 120.3L355.7 120.3L353.5 61.1L357 56.7L325.6 129.2Q325.4 129.6 324.6 129.6Q323.8 129.6 323.5 129.2L323.5 129.2L294.2 65.0Q290.4 56.4 281.9 56.4L281.9 56.4Q281.6 56.4 281.6 55.7Q281.6 55 281.9 55L281.9 55Q283.7 55 285.7 55.1Q287.8 55.2 289.1 55.2L289.1 55.2Q290.8 55.2 292.2 55.1Q293.6 55 294.4 55L294.4 55Q296.0 55 297 56.1Q298.0 57.2 299.9 61.2L299.9 61.2L327.4 120.6L324.2 125.7L353.8 58Q354.4 56.7 355.4 55.8Q356.4 55 357.4 55L357.4 55Q358.0 55 359.2 55.1Q360.4 55.2 361.9 55.2L361.9 55.2Q365.0 55.2 367.0 55.1Q368.9 55 371.0 55L371.0 55Q371.3 55 371.3 55.7Q371.3 56.4 371.0 56.4L371.0 56.4Q365.2 56.4 362.4 57.9Q359.6 59.4 359.8 64.5L359.8 64.5L362.0 120.3Q362.2 123.8 362.9 125.6Q363.7 127.4 366 128.0Q368.3 128.6 372.8 128.6ZM425.5 124.8L413.2 130.7Q412.7 131.0 412.2 131.0L412.2 131.0Q410.8 131.0 409.6 128.4Q408.4 125.9 408.4 121.1L408.4 121.1L408.4 98.0Q408.4 90.5 406.0 87.6Q403.7 84.8 400.2 84.8L400.2 84.8Q397.2 84.8 395.2 86.1Q393.2 87.5 392.2 89.6Q391.2 91.6 390.7 93.4L390.7 93.4Q390.5 94.6 389.9 96.2Q389.3 97.8 386.9 97.8L386.9 97.8Q385.1 97.8 384.2 96.8Q383.3 95.7 383.3 94.5L383.3 94.5Q383.3 92.4 385.4 90.3Q387.6 88.2 390.9 86.4Q394.2 84.6 397.8 83.6Q401.4 82.5 404.4 82.5L404.4 82.5Q409.3 82.5 411.6 85.7Q413.9 88.8 413.9 94.4L413.9 94.4L413.9 117.0Q413.9 121.4 414.9 123.3Q415.9 125.3 418.4 125.3L418.4 125.3Q420.7 125.3 425.0 123.5L425.0 123.5Q425.6 123.3 425.9 123.9Q426.1 124.6 425.5 124.8L425.5 124.8ZM391.9 130.8L391.9 130.8Q387.5 130.8 385.1 128.4Q382.8 125.9 382.8 122.7L382.8 122.7Q382.8 120.6 383.8 118.7Q384.8 116.8 387.4 115Q390 113.2 394.6 111.5L394.6 111.5L409.6 105.9L409.8 107.4L395.6 112.8Q393.1 113.8 391.8 114.9Q390.5 116.1 390 117.3Q389.5 118.6 389.5 119.9L389.5 119.9Q389.5 122.6 391.3 124.7Q393 126.9 396.4 126.9L396.4 126.9Q397.7 126.9 399.1 126.5Q400.6 126.0 402.6 124.8L402.6 124.8L410.6 120.2L410.9 121.6L401.9 127.2Q398.9 129.2 396.6 130Q394.3 130.8 391.9 130.8ZM463.7 130L463.7 130Q463.3 130 463.3 129.3Q463.3 128.6 463.7 128.6L463.7 128.6Q468.6 128.6 470.0 127Q471.5 125.4 471.5 120.3L471.5 120.3L471.5 100.2Q471.5 92.9 468.7 89.6Q466.0 86.2 460.1 86.2L460.1 86.2Q455.5 86.2 450.8 89.2Q446.0 92.2 442.6 97.5L442.6 97.5L442.1 96.0Q447.7 88.6 452.9 85.4Q458.0 82.1 463.3 82.1L463.3 82.1Q469.9 82.1 473.5 85.7Q477.1 89.2 477.1 96.6L477.1 96.6L477.1 120.3Q477.1 125.4 478.5 127Q479.9 128.6 484.9 128.6L484.9 128.6Q485.3 128.6 485.3 129.3Q485.3 130 484.9 130L484.9 130Q482.9 130 480.1 129.9Q477.4 129.8 474.4 129.8L474.4 129.8Q471.4 129.8 468.5 129.9Q465.7 130 463.7 130ZM431.4 130L431.4 130Q431.0 130 431.0 129.3Q431.0 128.6 431.4 128.6L431.4 128.6Q436.3 128.6 437.8 127Q439.2 125.4 439.2 120.3L439.2 120.3L439.2 96.3Q439.2 92.2 438.2 90.3Q437.3 88.5 434.9 88.5L434.9 88.5Q433.7 88.5 432 89.0Q430.3 89.4 428.2 90.3L428.2 90.3Q427.7 90.4 427.4 89.8Q427.1 89.2 427.6 89.0L427.6 89.0L440.9 82.7Q441.1 82.6 441.5 82.6L441.5 82.6Q442.3 82.6 443.6 85.1Q444.8 87.5 444.8 92.2L444.8 92.2L444.8 120.3Q444.8 125.4 446.2 127Q447.6 128.6 452.6 128.6L452.6 128.6Q453 128.6 453 129.3Q453 130 452.6 130L452.6 130Q450.6 130 447.8 129.9Q445.1 129.8 442.1 129.8L442.1 129.8Q439.1 129.8 436.3 129.9Q433.4 130 431.4 130ZM525.5 130L525.5 130Q525.1 130 525.1 129.3Q525.1 128.6 525.5 128.6L525.5 128.6Q530.4 128.6 531.8 127Q533.3 125.4 533.3 120.3L533.3 120.3L533.3 100.2Q533.3 92.9 530.5 89.6Q527.8 86.2 521.9 86.2L521.9 86.2Q517.3 86.2 512.6 89.2Q507.8 92.2 504.4 97.5L504.4 97.5L503.9 96.0Q509.5 88.6 514.7 85.4Q519.8 82.1 525.1 82.1L525.1 82.1Q531.7 82.1 535.3 85.7Q538.9 89.2 538.9 96.6L538.9 96.6L538.9 120.3Q538.9 125.4 540.3 127Q541.7 128.6 546.7 128.6L546.7 128.6Q547.1 128.6 547.1 129.3Q547.1 130 546.7 130L546.7 130Q544.7 130 541.9 129.9Q539.2 129.8 536.2 129.8L536.2 129.8Q533.2 129.8 530.3 129.9Q527.5 130 525.5 130ZM493.2 130L493.2 130Q492.8 130 492.8 129.3Q492.8 128.6 493.2 128.6L493.2 128.6Q498.1 128.6 499.6 127Q501 125.4 501 120.3L501 120.3L501 96.3Q501 92.2 500.0 90.3Q499.1 88.5 496.7 88.5L496.7 88.5Q495.5 88.5 493.8 89.0Q492.1 89.4 490.0 90.3L490.0 90.3Q489.5 90.4 489.2 89.8Q488.9 89.2 489.4 89.0L489.4 89.0L502.7 82.7Q502.9 82.6 503.3 82.6L503.3 82.6Q504.1 82.6 505.4 85.1Q506.6 87.5 506.6 92.2L506.6 92.2L506.6 120.3Q506.6 125.4 508.0 127Q509.4 128.6 514.4 128.6L514.4 128.6Q514.8 128.6 514.8 129.3Q514.8 130 514.4 130L514.4 130Q512.4 130 509.6 129.9Q506.9 129.8 503.9 129.8L503.9 129.8Q500.9 129.8 498.1 129.9Q495.2 130 493.2 130Z"/><path class="swash" d="M280 156c66.9-7 160.5-10 267.5-5" fill="none" stroke="var(--gold)" stroke-width="3.2" stroke-linecap="round"/></symbol></svg>
 <div class="wrap" id="app">
   <section id="picker" class="view" aria-labelledby="q">
     <header class="top">
-      <span class="wm" aria-label="Dear Mann">Dear <span>M</span>ann</span><span class="sp"></span>
+      <span class="wm sm" role="img" aria-label="Dear Mann"><svg viewBox="0 0 572 180" aria-hidden="true" focusable="false"><use href="#dm-wordmark"/></svg></span><span class="sp"></span>
       <button class="icon-btn" id="hideBtn" type="button" data-ic="lock" data-tal="lockNowL"></button>
       <button class="icon-btn" id="openDays" type="button" data-ic="calendar" data-tal="daysL"></button>
       <button class="icon-btn" id="openSettings" type="button" data-ic="settings" data-tal="settingsL"></button>
     </header>
     <p class="kicker" id="today"></p>
     <h1 class="display" id="q"></h1>
-    <div id="whoList" class="voices"></div>
-    <div class="moodbox">
-      <p class="small"><span data-t="moodQ"></span> <span class="faint" data-t="optional"></span></p>
-      <div class="chips" id="moods" role="group" data-tal="moodQ"></div>
+    <span class="wtlabel" id="wtL" data-t="writingTo"></span>
+    <div class="wtwrap" id="wtWrap">
+      <button class="wt" type="button" id="wtBtn" aria-haspopup="menu" aria-expanded="false" aria-labelledby="wtL wtBtn"></button>
     </div>
-    <p class="continue" id="continueLine" hidden></p>
+    <label class="sr" for="homeBox" data-t="phHome"></label>
+    <textarea class="ruled" id="homeBox" maxlength="4000" data-tph="phHome"></textarea>
+    <div class="homefoot">
+      <button class="btn btn-ghost" type="button" data-breathe><span data-ic="wind"></span><span data-t="needMinute"></span></button>
+      <button class="send" type="button" id="homeSend" disabled data-ic="arrow-up" data-tal="send"></button>
+    </div>
+    <p class="todayline" id="continueLine" hidden></p>
     <div id="impNudge"></div>
-    <button class="btn btn-secondary wide" type="button" data-breathe><span data-ic="wind"></span><span data-t="needMinute"></span></button>
     <p class="lockline"><span data-ic="lock"></span><span id="privacyNote" data-t="privacyLine"></span></p>
     <p class="foot" data-t="footHelp"></p>
   </section>
@@ -446,6 +614,7 @@ details.about summary{cursor:pointer;min-height:48px;display:flex;align-items:ce
       <button class="icon-btn" type="button" data-breathe data-ic="wind" data-tal="minuteL" id="pageBreathe"></button>
       <button class="icon-btn danger" id="delDay" type="button" data-ic="trash-2" data-tal="delPage" hidden></button>
     </header>
+    <div class="pmood"><p id="pmoodQ" data-t="moodQ"></p><div class="chips" id="moods" role="group" data-tal="moodQ"></div></div>
     <p class="kicker" id="pkicker"></p>
     <div id="entries"></div>
     <p class="sr" id="status" role="status" aria-live="polite"></p>
@@ -573,32 +742,53 @@ details.about summary{cursor:pointer;min-height:48px;display:flex;align-items:ce
   </div>
 </div>
 
+<!-- Add someone -->
+<div class="layer screen" id="addLayer" aria-hidden="true">
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="addH">
+    <header class="addhead"><button class="icon-btn" type="button" id="addBack" data-ic="x" data-tal="close"></button><h2 class="ptitle" id="addH"></h2><span class="stepn" id="addStep"></span></header>
+    <div id="addBody"></div>
+  </div>
+</div>
+
 <!-- Dialog -->
 <div class="layer" id="modalLayer" aria-hidden="true">
   <div class="scrim"></div>
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="mH" id="modal"></div>
 </div>
 
-<!-- Breathing -->
-<div class="layer" id="breathe" aria-hidden="true">
-  <div class="scrim"></div>
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="bH">
-    <h3 id="bH" data-t="breatheH"></h3>
-    <div class="circle" id="circle" aria-hidden="true"></div>
-    <p class="bword" id="bword" aria-live="polite"></p>
-    <p class="sub" id="bleft"></p>
-    <div class="acts" style="justify-content:center"><button class="btn btn-primary" type="button" id="bDone" data-t="done"></button></div>
+<!-- Breathing (full screen) -->
+<div class="layer screen" id="breathe" aria-hidden="true">
+  <div class="bscreen" role="dialog" aria-modal="true" aria-labelledby="bH">
+    <div class="btop"><button class="icon-btn" type="button" id="bClose" data-ic="x" data-tal="close"></button></div>
+    <div class="bmid" id="bMid">
+      <h2 class="sr" id="bH" data-t="breatheH"></h2>
+      <div class="circle" id="circle" aria-hidden="true"></div>
+      <p class="bword" id="bword" aria-live="polite"></p>
+      <p id="bleft"></p>
+    </div>
+    <div class="bdone" id="bDoneBox" hidden>
+      <h2 data-t="bDoneH"></h2>
+      <button class="btn btn-primary wide" type="button" id="bWrite" data-t="bWrite"></button>
+      <button class="btn btn-secondary wide" type="button" id="bDone" data-t="bHome"></button>
+    </div>
   </div>
 </div>
 
 <div id="lock" role="dialog" aria-modal="true" aria-labelledby="lockH" hidden>
   <div class="lockbox">
-    <span class="wm">Dear <span>M</span>ann</span>
-    <h2 id="lockH" data-t="lockEnter"></h2>
+    <span class="wm" role="img" aria-label="Dear Mann"><svg viewBox="0 0 572 180" aria-hidden="true" focusable="false"><use href="#dm-wordmark"/></svg></span>
+    <h2 id="lockH"></h2>
+    <p class="lsub" data-t="lockEnter"></p>
     <div id="lockPin"></div>
     <p id="lockErr" role="alert"></p>
-    <button class="btn btn-primary" type="button" id="pinGo" data-t="unlock" style="min-width:200px"></button>
-    <button class="link" type="button" id="pinForgot" data-t="forgot" style="margin-top:8px"></button>
+    <div class="keypad" id="keypad" aria-hidden="true">
+      <button type="button" tabindex="-1" data-key="1">1</button><button type="button" tabindex="-1" data-key="2">2</button><button type="button" tabindex="-1" data-key="3">3</button>
+      <button type="button" tabindex="-1" data-key="4">4</button><button type="button" tabindex="-1" data-key="5">5</button><button type="button" tabindex="-1" data-key="6">6</button>
+      <button type="button" tabindex="-1" data-key="7">7</button><button type="button" tabindex="-1" data-key="8">8</button><button type="button" tabindex="-1" data-key="9">9</button>
+      <span class="blank"></span><button type="button" tabindex="-1" data-key="0">0</button><button type="button" tabindex="-1" class="kdel" data-key="del" data-ic="delete" data-tal="backspaceL"></button>
+    </div>
+    <button class="btn btn-secondary" type="button" id="pinGo" data-t="unlock" style="min-width:200px" hidden></button>
+    <button class="btn btn-ghost" type="button" id="pinForgot" data-t="forgot"></button>
   </div>
 </div>
 
@@ -653,6 +843,51 @@ const MOODS = [["Low","--m-low"],["Anxious","--m-anx"],["Angry","--m-ang"],["Tir
 const MOODVAR = Object.fromEntries(MOODS);
 const DEFAULT_VOICES = { diary:{name:"Dear diary",rel:"diary",about:"",hidden:false}, friend:{name:"Best friend",rel:"best friend",about:"",hidden:false},
   spouse:{name:"Spouse",rel:"spouse",about:"",hidden:false}, mom:{name:"Mom",rel:"mom",about:"",hidden:false} };
+
+/* People and groups (design spec §8.1). The four original voices stay as built-in people so older diaries keep working.
+   Anyone added later is stored in settings.voices under an id starting with "x", with a relationship key and a group. */
+const BUILTIN = ["mom","spouse","friend","diary"];
+const BUILTIN_GROUP = {mom:"family", spouse:"partner", friend:"friends", diary:"me"};
+const BUILTIN_REL = {mom:"mother", spouse:"spouse", friend:"bestfriend"};
+const GROUP_ORDER = ["family","partner","friends","me"];
+const GROUP_COLOR = {family:"mom", partner:"spouse", friends:"friend", me:"diary"}; // which voice color a group uses
+const REL = { // g: group · pr: pronoun set · en: English, for prompts
+  mother:{g:"family",pr:"her",en:"mother"}, father:{g:"family",pr:"him",en:"father"}, sister:{g:"family",pr:"her",en:"sister"}, brother:{g:"family",pr:"him",en:"brother"},
+  spouse:{g:"partner",pr:"them",en:"spouse"}, bestfriend:{g:"friends",pr:"them",en:"best friend"},
+  grandmother:{g:"family",pr:"her",en:"grandmother",aka:"Nani, Dadi"}, grandfather:{g:"family",pr:"him",en:"grandfather",aka:"Nana, Dada"},
+  aunt:{g:"family",pr:"her",en:"aunt",aka:"Mausi, Bua, Chachi, Mami"}, uncle:{g:"family",pr:"him",en:"uncle",aka:"Mama, Chacha, Mausa"},
+  cousin:{g:"family",pr:"them",en:"cousin"}, daughter:{g:"family",pr:"her",en:"daughter"}, son:{g:"family",pr:"him",en:"son"},
+  inlaw:{g:"family",pr:"them",en:"in-law",aka:"Saas, Bhabhi, Jiju"},
+  friend:{g:"friends",pr:"them",en:"friend"}, colleague:{g:"friends",pr:"them",en:"colleague",work:true}, mentor:{g:"friends",pr:"them",en:"mentor",work:true},
+  teacher:{g:"friends",pr:"them",en:"teacher",work:true}, neighbour:{g:"friends",pr:"them",en:"neighbour",work:true},
+  other:{g:"friends",pr:"them",en:"someone close"}
+};
+const QUICK_RELS = ["mother","father","sister","brother","spouse","bestfriend"];
+const ELSE_RELS = {family:["grandmother","grandfather","aunt","uncle","cousin","daughter","son","inlaw"], friends:["friend","colleague","mentor","teacher","neighbour"]};
+const REL_VOICE = {
+  father:"Voice: her father. Steady and calm. A few practical words, never a lecture. Let her know he's proud of her and that she can lean on him.",
+  sister:"Voice: her sister. Fully on her side first, then gently teases her out of it, the way a sister who knows her well would.",
+  brother:"Voice: her brother. Protective and loyal. Keeps it light with a little banter, and makes sure she's okay."
+};
+const REL_HINT = {mother:"unconditional love, wants her smile back", father:"steady, a few practical words", sister:"on her side, then teases", brother:"protective, keeps it light",
+  spouse:"comfort plus a gentle bit of perspective", grandmother:"gentle, old-fashioned love", grandfather:"calm, wise, unhurried"};
+const MAX_PEOPLE = 24;
+function defOf(p){ return DEFAULT_VOICES[p] || {name:"",rel:"",about:"",hidden:false}; }
+function isCustom(p){ return typeof p==="string" && p[0]==="x" && !!(state.settings.voices||{})[p]; }
+function isPerson(p){ return BUILTIN.includes(p) || isCustom(p); }
+function people(){ const v=state.settings.voices||{}; return BUILTIN.concat(Object.keys(v).filter(k=>k[0]==="x" && v[k])); }
+function groupOf(p){ if(BUILTIN_GROUP[p]) return BUILTIN_GROUP[p]; const v=(state.settings.voices||{})[p]; return (v && GROUP_ORDER.includes(v.group)) ? v.group : "friends"; }
+function relKey(p){ if(BUILTIN_REL[p]) return BUILTIN_REL[p]; const v=(state.settings.voices||{})[p]; return (v && REL[v.relKey]) ? v.relKey : "other"; }
+function relLabel(p){
+  if(p==="diary") return t("listens"); if(p==="auto") return "";
+  const v=V(p), d=defOf(p);
+  if(v.rel && v.rel.trim() && v.rel.trim().toLowerCase()!==String(d.rel||"").toLowerCase()) return v.rel.trim();
+  return (t("rel")||{})[relKey(p)] || "";
+}
+function relEn(p){ const v=V(p), d=defOf(p); if(v.rel && v.rel.trim() && v.rel.trim().toLowerCase()!==String(d.rel||"").toLowerCase()) return v.rel.trim(); return (REL[relKey(p)]||REL.other).en; }
+function pronoun(rk){ return (REL[rk]||REL.other).pr; }
+function groupName(g){ if(g==="friends" && people().some(p=>visible(p) && groupOf(p)==="friends" && (REL[relKey(p)]||{}).work)) return t("grp").friendsOthers; return t("grp")[g]; }
+function groupNameLower(g){ const lw=t("grpLower")||{}; if(g==="friends" && groupName(g)===t("grp").friendsOthers) return lw.friendsOthers; return lw[g]||g; }
 
 // C7: wider safety net. Hinglish patterns are kept separate so the help card can switch to Hindi.
 const CRISIS_EN = [/suicid/i,/kill(ing)? myself/i,/end(ing)? (my|it) (life|all)/i,/want(ed)? to die/i,/(don'?t|do not|no) (want|reason) to live/i,/better off without me/i,
@@ -1028,7 +1263,72 @@ T.hl={
   suH:"Is diary ko apna banao.", suName:"Tumhe kya bulaun?", suGo:"Meri diary kholo",
   privacyLine:"Tumhare Claude account mein private. Sirf tum padh sakti ho."
 };
+
+/* ---------- 2026 redesign copy: people, groups, writing-to menu, mood grounds (design spec §8) ---------- */
+Object.assign(T.en,{
+  qMind:"What's on your mind?", qMindN:"What's on your mind, {n}?", writingTo:"Writing to", phHome:"Write it the way you'd say it…",
+  recent:"Recent", letChoose:"Let it choose", addSomeone:"Add someone", addTo:"Add to {g}", textsLike:"texts like them", someone:"Someone",
+  grp:{family:"Family",partner:"Partner",friends:"Friends",friendsOthers:"Friends & others",me:"Just me"},
+  grpLower:{family:"family",partner:"partner",friends:"friends",friendsOthers:"friends & others",me:"just me"},
+  rel:{mother:"Mother",father:"Father",sister:"Sister",brother:"Brother",spouse:"Spouse",bestfriend:"Best friend",grandmother:"Grandmother",grandfather:"Grandfather",aunt:"Aunt",uncle:"Uncle",cousin:"Cousin",daughter:"Daughter",son:"Son",inlaw:"In-law",friend:"Friend",colleague:"Colleague",mentor:"Mentor",teacher:"Teacher",neighbour:"Neighbour",other:"Someone close"},
+  relDesc:{mother:"Only wants your smile back.",father:"Steady, a few practical words.",sister:"On your side, then teases.",brother:"Protective, keeps it light.",spouse:"Comfort first, then a gentle pinch of reality.",bestfriend:"Facts or sympathy, your call.",other:"Warm, in their own way."},
+  names:{diary:"Dear diary",friend:"Best friend",spouse:"Spouse",mom:"Mom",auto:"Let it choose"},
+  lines:{diary:"Just listens. No advice.",friend:"Facts or sympathy, your call.",spouse:"Comfort first, then a gentle pinch of reality.",mom:"Only wants your smile back.",auto:"Picks a person from what you write."},
+  listens:"Just listens", moodQ:"How are you, roughly?",
+  emptyH:"Write it the way you'd say it.", emptySub:"English, हिन्दी or Hinglish. {n} will write back.", emptySubAuto:"English, हिन्दी or Hinglish. Someone will write back.",
+  isWriting:"{n} is writing", noted:"Noted. Thank you.", todayHas:"Today's page has {n} so far.", todayOne:"one entry", todayMany:"{n} entries", openPage:"Open it",
+  lockWelcome:"Welcome back, {n}.", lockWelcome0:"Welcome back.", lockEnter:"Your PIN, please.", backspaceL:"Backspace", unlock:"Unlock",
+  bDoneH:"That was a minute.", bWrite:"Write it down", bHome:"Back home", bCount:"Round {a} of {b} · {s}",
+  addH:"Add someone", elseH:"Someone else", addStep:"{a} of 2", whoH:"Who are they to you?", elseT:"Someone else", elseS:"Nani, Mausi, cousin, colleague, mentor…",
+  callWhat:{her:"What do you call her?",him:"What do you call him?",them:"What do you call them?"},
+  under:{her:"She'll be under {g}.",him:"He'll be under {g}.",them:"They'll be under {g}."},
+  searchRel:"Search, or type your own", useTyped:"Use “{r}”", whichGroup:"Which group do they belong to?", change:"Change",
+  howH:"How should {n} sound?", likeSelf:{her:"Like {n} herself",him:"Like {n} himself",them:"Like {n}, in their own words"},
+  likeP:"Share your WhatsApp chat. Replies come in their words, in short bursts, the way they text.",
+  uploadT:"Upload the chat", uploadS:"WhatsApp → chat → ⋮ → More → Export chat → Without media",
+  gentle:"A gentle {r}", addLater:"You can add the chat later.", onlyStyle:"Only their style is kept. The chat is deleted once read.",
+  chooseChat:"Choose the chat", savePerson:"Save", added:"{n} is added. You're writing to {n} now.",
+  removeP:"Remove {n}", removePT:"Remove {n}?", removePB:"{n} will be removed from your people, along with any imported style. Pages you've already written stay.", removePOk:"Remove",
+  keepOne:"Keep at least one person visible.", vRowsFoot:"Tap a person to rename them or change how they sound.",
+  sample:{mother:"beta, pehle kuch khaya?",father:"Chalo, ek-ek karke dekhte hain.",sister:"arre pagli, pehle bata kya hua",brother:"kaun pareshan kar raha hai? bol bas",spouse:"Come here. Tell me everything.",bestfriend:"okay wait. full story. now.",other:"I'm here. Tell me what happened."}
+});
+Object.assign(T.hi,{
+  qMind:"मन में क्या है?", qMindN:"{n}, मन में क्या है?", writingTo:"किसे लिख रही हैं", phHome:"जैसे बोलती हैं, वैसे ही लिखिए…",
+  recent:"हाल में", letChoose:"ख़ुद चुनने दें", addSomeone:"किसी को जोड़ें", addTo:"{g} में जोड़ें", textsLike:"उनकी तरह लिखती हैं", someone:"कोई",
+  grp:{family:"परिवार",partner:"जीवनसाथी",friends:"दोस्त",friendsOthers:"दोस्त और बाकी",me:"सिर्फ़ मैं"},
+  grpLower:{family:"परिवार",partner:"जीवनसाथी",friends:"दोस्त",friendsOthers:"दोस्त और बाकी",me:"सिर्फ़ मैं"},
+  rel:{mother:"माँ",father:"पापा",sister:"बहन",brother:"भाई",spouse:"जीवनसाथी",bestfriend:"सबसे अच्छी दोस्त",grandmother:"दादी / नानी",grandfather:"दादा / नाना",aunt:"मौसी / बुआ / चाची / मामी",uncle:"मामा / चाचा / मौसा",cousin:"कज़िन",daughter:"बेटी",son:"बेटा",inlaw:"ससुराल वाले",friend:"दोस्त",colleague:"साथ काम करने वाले",mentor:"मार्गदर्शक",teacher:"टीचर",neighbour:"पड़ोसी",other:"कोई अपना"},
+  relDesc:{mother:"बस आपकी मुस्कान वापस चाहिए।",father:"शांत, थोड़ी काम की बातें।",sister:"पहले आपकी तरफ़, फिर थोड़ी छेड़छाड़।",brother:"हिफ़ाज़त करने वाला, बात हल्की रखता है।",spouse:"पहले तसल्ली, फिर थोड़ा-सा सच।",bestfriend:"सीधी बात या हमदर्दी, आप चुनें।",other:"अपने ही अंदाज़ में अपनापन।"},
+  names:{diary:"प्रिय डायरी",friend:"सबसे अच्छी दोस्त",spouse:"जीवनसाथी",mom:"माँ",auto:"ख़ुद चुनने दें"},
+  listens:"बस सुनती है", moodQ:"मन कैसा है?",
+  emptyH:"जैसे बोलती हैं, वैसे ही लिखिए।", emptySub:"English, हिन्दी या Hinglish. {n} जवाब देंगे।", emptySubAuto:"English, हिन्दी या Hinglish. कोई अपना जवाब देगा।",
+  isWriting:"{n} लिख रहे हैं", noted:"नोट कर लिया। शुक्रिया।", todayHas:"आज के पन्ने पर अब तक {n} हैं।", todayOne:"एक बात", todayMany:"{n} बातें", openPage:"खोलें",
+  lockWelcome:"फिर से स्वागत है, {n}।", lockWelcome0:"फिर से स्वागत है।", lockEnter:"अपना PIN डालिए।", backspaceL:"मिटाएँ", unlock:"खोलें",
+  bDoneH:"एक मिनट हो गया।", bWrite:"लिख डालिए", bHome:"होम पर चलें", bCount:"{b} में से {a} · {s}",
+  addH:"किसी को जोड़ें", elseH:"कोई और", whoH:"वे आपके क्या लगते हैं?", elseT:"कोई और", elseS:"नानी, मौसी, कज़िन, साथ काम करने वाले…",
+  callWhat:{her:"आप उन्हें क्या कहकर बुलाती हैं?",him:"आप उन्हें क्या कहकर बुलाती हैं?",them:"आप उन्हें क्या कहकर बुलाती हैं?"},
+  under:{her:"वे {g} में रहेंगी।",him:"वे {g} में रहेंगे।",them:"वे {g} में रहेंगे।"},
+  searchRel:"खोजिए, या अपना लिखिए", useTyped:"“{r}” रखें", whichGroup:"वे किस समूह में हैं?", change:"बदलें",
+  howH:"{n} कैसे लिखें?", likeSelf:{her:"बिल्कुल {n} की तरह",him:"बिल्कुल {n} की तरह",them:"बिल्कुल {n} की तरह"},
+  likeP:"उनके साथ की WhatsApp चैट दीजिए। जवाब उन्हीं के शब्दों में, छोटे-छोटे मैसेज में आएँगे।",
+  uploadT:"चैट अपलोड करें", gentle:"एक प्यारे {r} की तरह", addLater:"चैट बाद में भी जोड़ सकती हैं।", onlyStyle:"सिर्फ़ लिखने का अंदाज़ रखा जाता है। पढ़ने के बाद चैट हटा दी जाती है।",
+  chooseChat:"चैट चुनें", savePerson:"सेव करें", added:"{n} जुड़ गए। अब आप {n} को लिख रही हैं।",
+  removeP:"{n} को हटाएँ", removePT:"{n} को हटाएँ?", removePB:"{n} आपके लोगों से हट जाएँगे, इम्पोर्ट किया अंदाज़ भी। पहले लिखे पन्ने रहेंगे।", removePOk:"हटाएँ",
+  keepOne:"कम से कम एक व्यक्ति दिखता रहे।", vRowsFoot:"नाम या अंदाज़ बदलने के लिए किसी पर टैप करें।"
+});
+Object.assign(T.en,{ pinAria:"PIN, 4 digits", chose:"chose {n}", wrongPin:"That's not it. Try again." });
+Object.assign(T.hi,{ pinAria:"PIN, 4 अंक", chose:"{n} को चुना", wrongPin:"यह सही नहीं है। फिर कोशिश कीजिए।", addStep:"2 में से {a}", uploadS:"WhatsApp → चैट → ⋮ → More → Export chat → Without media", textsLike:"उनकी तरह लिखते हैं", isWriting:"{n} लिख रहे हैं",
+  relDesc:Object.assign({}, T.en.relDesc, T.hi.relDesc||{}) });
+Object.assign(T.hl,{
+  qMind:"Mann mein kya hai?", qMindN:"{n}, mann mein kya hai?", phHome:"Jaise bolti ho, waise hi likho…", letChoose:"Khud chun lene do"
+});
 const ICONS={
+  "chevron-down":'<path d="m6 9 6 6 6-6"/>',
+  "chevron-up":'<path d="m18 15-6-6-6 6"/>',
+  "chevron-left":'<path d="m15 18-6-6 6-6"/>',
+  "plus":'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  "circle-alert":'<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+  "upload":'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
   "lock":'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   "arrow-left":'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
   "x":'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
@@ -1079,9 +1379,14 @@ function applyI18n(){
   $("#box").placeholder=t("phAll"); $("#hint").textContent=t("hint");
 }
 
-function V(p){ const v=(state.settings.voices||{})[p]; return Object.assign({}, DEFAULT_VOICES[p]||{}, v||{}); }
-function vname(p){ if(p==="auto") return t("names").auto; const v=V(p); return (v.name && v.name!==DEFAULT_VOICES[p].name) ? v.name : t("names")[p]; }
-function visible(p){ return p==="auto" || !V(p).hidden; }
+function V(p){ const v=(state.settings.voices||{})[p]; return Object.assign({}, defOf(p), v||{}); }
+function vname(p){
+  if(p==="auto") return t("names").auto;
+  if(BUILTIN.includes(p)){ const v=V(p); return (v.name && v.name!==defOf(p).name) ? v.name : t("names")[p]; }
+  if(!isCustom(p)) return t("someone");
+  const v=V(p); return (v.name && v.name.trim()) || relLabel(p) || t("someone");
+}
+function visible(p){ return p==="auto" || (isPerson(p) && !V(p).hidden); }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
 function bytes(o){ const s=JSON.stringify(o); try{ return new TextEncoder().encode(s).length; }catch(e){ return s.length*3; } }
 
@@ -1249,11 +1554,12 @@ function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const DEVA=/[\u0900-\u097F]/;
 function langOf(p){ if(!DEVA.test(p)) return ""; return /(आहे|नाही|मला|आणि|झालं|मी )/.test(p) ? "mr" : "hi"; } // C2
 function paras(txt){ return String(txt).trim().split(/\n+/).filter(Boolean).map(p=>{ const lg=langOf(p); return `<p${lg?` lang="${lg}"`:""}>${esc(p)}</p>`; }).join(""); }
-function personaColor(p){ return `var(${(PERSONAS[p]||PERSONAS.diary).c})`; }
 function personaLabel(e){
-  if(!PERSONAS[e.persona]) return vname("diary");
-  if(e.persona==="friend") return vname("friend") + ", " + (e.mode==="sympathy" ? t("sympathy") : t("facts")).toLowerCase();
-  return vname(e.persona);
+  const p=e.persona;
+  if(p==="auto") return vname("auto");
+  if(!isPerson(p)) return e.who || t("someone");
+  const n=vname(p);
+  return (relKey(p)==="bestfriend" && p!=="diary" && e.mode) ? n + ", " + (e.mode==="sympathy" ? t("sympathy") : t("facts")).toLowerCase() : n;
 }
 function peopleLine(){
   const p=state.settings.people||[]; if(!p.length) return "";
@@ -1269,8 +1575,8 @@ function stripFlags(x){ return String(x).replace(/\[\[(CARE|DANGER)\]\]\s*/g,"")
 function partialFlag(x){ const s=String(x).trimStart(); return s.startsWith("[") && !/\]\]/.test(s) && s.length<12; }
 function announce(msg){ const s=$("#status"); s.textContent=""; setTimeout(()=>{ s.textContent=msg; },30); }
 function announceNote(msg, retry){
-  const n=document.createElement("p"); n.className="note"; n.textContent=msg;
-  if(retry){ const b=document.createElement("button"); b.type="button"; b.className="hbtn retry"; b.textContent=t("tryAgain"); b.onclick=()=>{ n.remove(); retry(); }; n.appendChild(b); }
+  const n=document.createElement("div"); n.className="note"; n.innerHTML=icon("circle-alert")+'<span class="ntext"><span></span></span>'; n.querySelector(".ntext span").textContent=msg;
+  if(retry){ const b=document.createElement("button"); b.type="button"; b.className="btn btn-ghost retry"; b.textContent=t("tryAgain"); b.onclick=()=>{ n.remove(); retry(); }; n.querySelector(".ntext").appendChild(b); }
   $("#entries").appendChild(n); announce(msg); return n;
 }
 function raiseCare(kind, lang){ if(kind==="danger" || !state.careShown){ state.careShown=kind; state.careLang=lang; } }
@@ -1346,7 +1652,7 @@ async function signup(){
     const draw=(keep={})=>{
       m.className="dialog signup";
       m.innerHTML=`<div class="su">
-        <span class="wm" style="padding:0">Dear <span>M</span>ann</span>
+        <span class="wm" role="img" aria-label="Dear Mann"><svg viewBox="0 0 572 180" aria-hidden="true" focusable="false"><use href="#dm-wordmark"/></svg></span>
         <h3 id="mH" class="display">${esc(t("suH"))}</h3>
         <p class="lead">${esc(t("suP1"))}</p>
         <div class="segmented" role="group" aria-label="Language / भाषा">
@@ -1371,20 +1677,20 @@ async function signup(){
         if(a!==b || !/^\d{4}$/.test(a)){ $("#suErr").textContent=t("pinMismatch"); $("#suPin1").focus(); return; }
         $("#wGo").disabled=true;
         const salt=uid(); const now=Date.now();
-        Object.assign(state.settings,{name:$("#suName").value.trim().slice(0,40), uiLang:L(), pinSalt:salt, pinHash:await hashPin(a,salt), lockAfter:"1", disguise:false,
+        Object.assign(state.settings,{name:$("#suName").value.trim().slice(0,40), uiLang:L(), pinSalt:salt, pinHash:await hashPin(a,salt), pinLen:4, lockAfter:"1", disguise:false,
           welcomed:true, welcomedAt:now, signedUpAt:now, noticeVersion:CONFIG.NOTICE_VERSION, hidden:false});
-        saveSettings("name","uiLang","pinSalt","pinHash","lockAfter","disguise","welcomed","welcomedAt","signedUpAt","noticeVersion","hidden");
+        saveSettings("name","uiLang","pinSalt","pinHash","pinLen","lockAfter","disguise","welcomed","welcomedAt","signedUpAt","noticeVersion","hidden");
         m.className="dialog"; closeLayer("#modalLayer"); renderPicker(); res();
       };
     };
-    draw(); openLayer("#modalLayer");
+    draw(); openLayer("#modalLayer"); setTimeout(()=>{ const n=$("#suName"); if(n) n.focus(); },40);
   });
 }
 
 /* ---------- design helpers ---------- */
-function dv(p){ return p==="auto" ? "decide" : (PERSONAS[p] ? p : "diary"); }
-function baseName(p){ return t("names")[p] || t("names").diary; }
-function customName(p){ if(p==="auto"||p==="diary"||!DEFAULT_VOICES[p]) return ""; const v=V(p); return (v.name && v.name!==DEFAULT_VOICES[p].name) ? v.name : ""; }
+function dv(p){ if(p==="auto") return "decide"; if(BUILTIN_GROUP[p]) return p; return GROUP_COLOR[groupOf(p)] || "diary"; }
+function baseName(p){ if(BUILTIN.includes(p) || p==="auto") return t("names")[p]; return relLabel(p) || t("someone"); }
+function customName(p){ if(p==="auto"||p==="diary") return ""; const v=V(p); if(isCustom(p)) return (v.name||"").trim(); if(!DEFAULT_VOICES[p]) return ""; return (v.name && v.name!==defOf(p).name) ? v.name : ""; }
 function sigLang(text){ return (L()==="hi" || DEVA.test(String(text||""))) ? "hi" : "en"; }
 function sigHtml(text, fresh, delay){
   const lg=sigLang(text);
@@ -1393,41 +1699,128 @@ function sigHtml(text, fresh, delay){
 function bubbles(lines, fresh){ return `<div class="burst">${lines.map((x,i)=>{ const lg=langOf(x); return `<p class="bubble${fresh?" arrive":""}"${lg?` lang="${lg}"`:""}${fresh?` style="animation-delay:${i*600}ms"`:""}>${esc(x)}</p>`; }).join("")}</div>`; }
 function updateComposer(){ $("#compose").hidden = !!state.viewing || !!state.careHold || $("#chat").style.display!=="block"; }
 
-/* ---------- 02 Home ---------- */
+/* ---------- 02 Home (spec §8.2, option 2a): "Writing to" + a ruled page ---------- */
+function isFriendLike(p){ return isPerson(p) && p!=="diary" && relKey(p)==="bestfriend"; }
+function visiblePeople(){ return people().filter(p=>visible(p)); }
+function displayName(p){ return customName(p) || baseName(p); }
+function personRole(p){
+  if(p==="auto") return t("lines").auto;
+  if(p==="diary") return t("listens");
+  if(isCustom(p)) return relLabel(p);
+  return customName(p) ? baseName(p) : ((t("relDesc")||{})[relKey(p)] || "");
+}
+function currentTo(){
+  const s=state.settings.lastTo;
+  if(s==="auto" || (s && visible(s))) return s;
+  const r=(state.settings.recentTo||[]).find(p=>visible(p)); if(r) return r;
+  const lt=[...state.entries].reverse().find(e=>e.role==="them" && visible(e.persona)); if(lt) return lt.persona;
+  return ["mom","friend","spouse","diary"].find(visible) || visiblePeople()[0] || "auto";
+}
+function setTo(p){
+  if(!p) return;
+  state.settings.lastTo=p;
+  if(p!=="auto") state.settings.recentTo=[p].concat((state.settings.recentTo||[]).filter(x=>x!==p)).slice(0,4);
+  saveSettings("lastTo","recentTo"); renderWt();
+}
+let wtOpen=false, wtGroup=null;
+function renderWt(){
+  const p=currentTo(); const b=$("#wtBtn"); if(!b) return;
+  $("#picker").dataset.voice=dv(p);
+  b.innerHTML=`<span class="mark${p==="auto"?" decide":""}" data-voice="${dv(p)}"><span></span></span><span class="wtn">${esc(displayName(p))}</span><span class="wtr">${esc(personRole(p))}</span>${icon(wtOpen?"chevron-up":"chevron-down")}`;
+  b.setAttribute("aria-expanded", wtOpen?"true":"false");
+}
+function wtRow(p, cls, cur){
+  const styled = p!=="diary" && p!=="auto" && !!V(p).style;
+  return `<button type="button" role="menuitem" class="mi ${cls}" data-to="${esc(p)}" data-voice="${dv(p)}"><span class="dot8${p==="auto"?" decide":""}"></span><span class="mtext"><span class="mn">${esc(displayName(p))}</span><span class="mr">${esc(personRole(p))}</span></span>${styled?`<span class="texts mr" title="${esc(t("textsLike"))}">${icon("message-circle")}<span class="sr">${esc(t("textsLike"))}</span></span>`:""}${p===cur?`<span class="tick">${icon("check")}</span>`:""}</button>`;
+}
+function openWt(group, focusSel){
+  wtOpen=true; wtGroup=group||null;
+  let s=$("#wtScrim"); if(!s){ s=document.createElement("div"); s.className="wtmenu-scrim"; s.id="wtScrim"; s.addEventListener("click",()=>closeWt()); document.body.appendChild(s); }
+  let m=$("#wtMenu"); if(!m){ m=document.createElement("div"); m.className="wtmenu"; m.id="wtMenu"; m.setAttribute("role","menu"); m.setAttribute("aria-labelledby","wtL"); $("#wtWrap").appendChild(m); }
+  const cur=currentTo(); let h="";
+  if(!group){
+    const rec=(state.settings.recentTo||[]).filter(p=>visible(p)).slice(0,2);
+    if(rec.length) h+=`<p class="mk">${esc(t("recent"))}</p>`+rec.map(p=>wtRow(p,"",cur)).join("")+`<hr>`;
+    for(const g of ["family","partner","friends"]){
+      const mem=visiblePeople().filter(p=>p!=="diary" && groupOf(p)===g); if(!mem.length) continue;
+      h+=`<button type="button" role="menuitem" class="mi grp" data-grp="${g}" data-voice="${GROUP_COLOR[g]}" aria-haspopup="menu"><span class="mark"><span></span></span><span class="mtext inline"><span class="mn">${esc(groupName(g))}</span><span class="count">${mem.length}</span></span>${icon("chevron-right")}</button>`;
+    }
+    if(visible("diary")) h+=`<button type="button" role="menuitem" class="mi grp" data-to="diary" data-voice="diary"><span class="mark"><span></span></span><span class="mtext"><span class="mn">${esc(displayName("diary"))}</span><span class="mr">${esc(t("listens"))}</span></span>${cur==="diary"?`<span class="tick">${icon("check")}</span>`:""}</button>`;
+    h+=`<button type="button" role="menuitem" class="mi grp" data-to="auto" data-voice="decide"><span class="mark decide"><span></span></span><span class="mtext"><span class="mn">${esc(t("letChoose"))}</span><span class="mr">${esc(t("lines").auto)}</span></span>${cur==="auto"?`<span class="tick">${icon("check")}</span>`:""}</button>`;
+    h+=`<hr><button type="button" role="menuitem" class="mi add" data-add="">${icon("plus")}<span>${esc(t("addSomeone"))}</span></button>`;
+  } else {
+    h+=`<div class="mi head" data-voice="${GROUP_COLOR[group]}"><button type="button" role="menuitem" class="icon-btn" data-back aria-label="${esc(t("back"))}">${icon("chevron-left")}</button><span class="dot8"></span><span class="mn">${esc(groupName(group))}</span></div>`;
+    h+=visiblePeople().filter(p=>p!=="diary" && groupOf(p)===group).map(p=>wtRow(p,"person",cur)).join("");
+    h+=`<hr><button type="button" role="menuitem" class="mi add" data-add="${group}">${icon("plus")}<span>${esc(t("addTo",{g:groupNameLower(group)}))}</span></button>`;
+  }
+  m.innerHTML=h; renderWt();
+  const f=(focusSel && m.querySelector(focusSel)) || m.querySelector('.mi[data-to="'+cur+'"]') || m.querySelector("[role=menuitem]");
+  if(f) f.focus();
+}
+function closeWt(refocus){
+  wtOpen=false; wtGroup=null; const m=$("#wtMenu"), s=$("#wtScrim"); if(m) m.remove(); if(s) s.remove();
+  renderWt(); if(refocus!==false) $("#wtBtn").focus();
+}
+$("#wtBtn").addEventListener("click",()=>{ if(wtOpen) closeWt(); else openWt(null); });
+$("#wtWrap").addEventListener("click",e=>{
+  const m=e.target.closest("#wtMenu"); if(!m) return;
+  const back=e.target.closest("[data-back]"); if(back){ const g=wtGroup; openWt(null,`[data-grp="${g}"]`); return; }
+  const g=e.target.closest("[data-grp]"); if(g){ openWt(g.dataset.grp); return; }
+  const to=e.target.closest("[data-to]"); if(to){ setTo(to.dataset.to); closeWt(); return; }
+  const add=e.target.closest("[data-add]"); if(add){ const grp=add.dataset.add||null; closeWt(false); openAdd(grp); }
+});
+$("#wtWrap").addEventListener("keydown",e=>{
+  if(!wtOpen) return;
+  const items=$$("#wtMenu [role=menuitem]"); const i=items.indexOf(document.activeElement);
+  if(e.key==="Escape"){ e.preventDefault(); e.stopPropagation(); if(wtGroup) openWt(null,`[data-grp="${wtGroup}"]`); else closeWt(); return; }
+  if(e.key==="ArrowDown"){ e.preventDefault(); (items[i+1]||items[0]).focus(); return; }
+  if(e.key==="ArrowUp"){ e.preventDefault(); (items[i-1]||items[items.length-1]).focus(); return; }
+  if(e.key==="Home"){ e.preventDefault(); items[0].focus(); return; }
+  if(e.key==="End"){ e.preventDefault(); items[items.length-1].focus(); return; }
+  if(e.key==="ArrowRight" && document.activeElement.dataset.grp){ e.preventDefault(); openWt(document.activeElement.dataset.grp); return; }
+  if(e.key==="ArrowLeft" && wtGroup){ e.preventDefault(); openWt(null,`[data-grp="${wtGroup}"]`); return; }
+  if(e.key==="Tab"){ closeWt(false); }
+});
+function homeSend(){
+  const box=$("#homeBox"); const text=box.value.trim(); if(!text || state.busy) return;
+  const p=currentTo(); box.value=""; $("#homeSend").disabled=true;
+  choose(p); $("#box").value=text; autosize(); updateSend(); send();
+}
+$("#homeBox").addEventListener("input",()=>{ $("#homeSend").disabled=!$("#homeBox").value.trim(); });
+$("#homeBox").addEventListener("keydown",e=>{ if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); homeSend(); } });
+$("#homeSend").onclick=homeSend;
+
 function renderPicker(){
   const now=new Date();
   $("#today").textContent = now.toLocaleDateString(loc(),{weekday:"long"})+" · "+now.toLocaleTimeString(loc(),{hour:"numeric",minute:"2-digit"}).toLowerCase();
-  const nm=(state.settings.name||"").trim(); $("#q").textContent = nm ? t("qN",{n:nm}) : t("q");
+  const nm=(state.settings.name||"").trim(); $("#q").textContent = nm ? t("qMindN",{n:nm}) : t("qMind");
   const ob=$("#picker .banner"); if(ob) ob.remove(); const bn=resetBanner(); if(bn) $("#q").after(bn);
   $("#hideBtn").setAttribute("aria-label", state.settings.disguise ? t("hideNowL") : t("lockNowL")); $("#hideBtn").title=$("#hideBtn").getAttribute("aria-label");
-  const box=$("#whoList"); box.innerHTML="";
-  for(const k of ["diary","friend","spouse","mom","auto"]){
-    if(!visible(k)) continue;
-    const cn=customName(k);
-    const nameHtml=`<span class="vc-name">${esc(baseName(k))}${cn?` <em>· ${esc(cn)}</em>`:""}</span>`;
-    const markHtml=`<span class="mark${k==="auto"?" decide":""}"><span></span></span>`;
-    if(k==="friend"){
-      box.insertAdjacentHTML("beforeend",`<div class="voice-card has-seg" data-voice="friend"><button type="button" class="vc-main" data-p="friend">${markHtml}<span class="vc-text">${nameHtml}<span class="vc-desc sr">${esc(t("lines").friend)}</span></span></button><span class="seg" role="group" aria-label="${esc(baseName("friend"))}"><button type="button" data-fm="facts" aria-pressed="${state.friendMode==="facts"}">${esc(t("facts"))}</button><button type="button" data-fm="sympathy" aria-pressed="${state.friendMode==="sympathy"}">${esc(t("sympathy"))}</button></span></div>`);
-    } else {
-      box.insertAdjacentHTML("beforeend",`<button type="button" class="voice-card" data-p="${k}" data-voice="${dv(k)}">${markHtml}<span class="vc-text">${nameHtml}<span class="vc-desc">${esc(t("lines")[k])}</span></span>${icon("chevron-right")}</button>`);
-    }
-  }
+  if(wtOpen) openWt(wtGroup); else renderWt();
+  $("#homeSend").disabled=!$("#homeBox").value.trim();
+  renderImpNudge();
+  const mine=state.entries.filter(e=>e.role==="me").length;
+  const cl=$("#continueLine");
+  if(mine){
+    const last=[...state.entries].reverse().find(e=>e.role==="them" && visible(e.persona));
+    cl.hidden=false;
+    cl.innerHTML=`${esc(t("todayHas",{n: mine===1 ? t("todayOne") : t("todayMany",{n:mine})}))} <button type="button" class="link" id="contBtn">${esc(t("openPage"))}</button>`;
+    $("#contBtn").onclick=()=>{ const p=last?last.persona:currentTo(); if(last && isFriendLike(p)) state.friendMode=last.mode||"facts"; choose(p); };
+  } else cl.hidden=true;
+}
+function renderMoods(){
   const mc=$("#moods"); mc.innerHTML="";
   for(const [m] of MOODS){
-    const b=document.createElement("button"); b.type="button"; b.className="chip"; b.dataset.mood=m;
+    const b=document.createElement("button"); b.type="button"; b.className="chip"; b.dataset.m=m;
     b.setAttribute("aria-pressed", state.mood===m?"true":"false");
     b.innerHTML=(state.mood===m?icon("check"):"")+`<span>${esc(t("moods")[m])}</span>`;
-    b.onclick=()=>{ state.mood = state.mood===m ? null : m; renderPicker(); const again=$$("#moods .chip").find(x=>x.dataset.mood===m); if(again) again.focus(); };
+    b.onclick=()=>{ state.mood = state.mood===m ? null : m; applyMood(); renderMoods(); const again=$$("#moods .chip").find(x=>x.dataset.m===m); if(again) again.focus(); };
     mc.appendChild(b);
   }
-  renderImpNudge();
-  const last=[...state.entries].reverse().find(e=>e.role==="them" && visible(e.persona));
-  const cl=$("#continueLine");
-  if(last){
-    cl.hidden=false;
-    cl.innerHTML=`${esc(t("wroteToday"))} <button type="button" class="link" id="contBtn">${esc(t("contWith",{n:vname(last.persona)}))}</button>`;
-    $("#contBtn").onclick=()=>{ if(last.persona==="friend") state.friendMode=last.mode||"facts"; choose(last.persona); };
-  } else cl.hidden=true;
+}
+function applyMood(m){
+  const c=$("#chat"); const v = m!==undefined ? m : state.mood;
+  if(v) c.dataset.mood=v; else delete c.dataset.mood;
 }
 
 /* ---------- 03 Diary page ---------- */
@@ -1435,7 +1828,8 @@ function renderEntries(list, readOnly){
   const box=$("#entries"); box.innerHTML="";
   if(!readOnly && state.griefCheck && state.griefCheck===state.persona) box.appendChild(griefCard(state.griefCheck));
   if(!list.length && !(state.careShown && !readOnly)){
-    box.insertAdjacentHTML("beforeend",`<p class="empty">${esc(readOnly?t("emptyRO"):t("empty"))}</p>`);
+    if(readOnly) box.insertAdjacentHTML("beforeend",`<p class="empty">${esc(t("emptyRO"))}</p>`);
+    else box.insertAdjacentHTML("beforeend",`<div class="pempty"><h2>${esc(t("emptyH"))}</h2><p>${esc(state.persona==="auto"?t("emptySubAuto"):t("emptySub",{n:vname(state.persona)}))}</p></div>`);
     if(!readOnly){ const sd=document.createElement("div"); sd.className="starters"; t("starters").forEach(s=>{ const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=s; b.onclick=()=>{ const bx=$("#box"); bx.value=s+" "; bx.focus(); autosize(); updateSend(); }; sd.appendChild(b); }); box.appendChild(sd); }
     updateComposer(); return;
   }
@@ -1450,13 +1844,14 @@ function renderEntries(list, readOnly){
       const fresh = e.id===state.fresh;
       const lines = e.styled ? splitReplyLines(e.text) : null;
       d.className="entry them"; d.dataset.voice=dv(e.persona);
-      const showWho = list.some(x=>x.role==="them" && x.persona!==e.persona) || readOnly;
+      const chose = !readOnly && state.persona==="auto" && e.persona!=="auto";
+      const showWho = chose || list.some(x=>x.role==="them" && x.persona!==e.persona) || readOnly;
       const bodyHtml = e.styled ? bubbles(lines, fresh) : `<div class="prose">${paras(e.text)}</div>`;
-      d.innerHTML=`${showWho?`<p class="who-l"><span class="mark${e.persona==="auto"?" decide":""}"><span></span></span>${esc(personaLabel(e))}</p>`:""}${bodyHtml}${sigHtml(e.text, fresh, fresh&&lines?lines.length*600:0)}`;
+      d.innerHTML=`${showWho?`<p class="who-l">${chose?`<span class="mark decide" data-voice="decide"><span></span></span>`:""}<span class="mark${e.persona==="auto"?" decide":""}"><span></span></span>${esc(chose?t("letChoose")+" · "+t("chose",{n:personaLabel(e)}):personaLabel(e))}</p>`:""}${bodyHtml}${sigHtml(e.text, fresh, fresh&&lines?lines.length*600:0)}`;
       if(i===lastThem && !readOnly){
-        const others=["diary","friend","spouse","mom"].filter(p=>p!==e.persona && visible(p)).concat(visible("auto")?["auto"]:[]);
+        const others=visiblePeople().filter(p=>p!==e.persona).concat(["auto"]);
         d.insertAdjacentHTML("beforeend",`<hr class="rule"><div class="lighter" role="group" aria-label="${esc(t("lighterQ"))}"><span>${esc(t("lighterQ"))}</span><button type="button" class="chip" data-lighter="yes" aria-pressed="${e.lighter===true}">${e.lighter===true?icon("check"):""}${esc(t("yes"))}</button><button type="button" class="chip" data-lighter="no" aria-pressed="${e.lighter===false}">${e.lighter===false?icon("check"):""}${esc(t("notReally"))}</button></div>`
-          +(others.length?`<div class="again"><p>${esc(t("hearFrom"))}</p><div class="chips">${others.map(p=>`<button type="button" class="chip" data-again="${p}" data-voice="${dv(p)}"><span class="dot"></span>${esc(vname(p))}</button>`).join("")}</div></div>`:""));
+          +(others.length?`<div class="again"><p>${esc(t("hearFrom"))}</p><div class="chips">${others.map(p=>`<button type="button" class="chip" data-again="${p}" data-voice="${dv(p)}"><span class="dot"></span>${esc(p==="auto"?t("letChoose"):displayName(p))}</button>`).join("")}</div></div>`:""));
       }
     }
     box.appendChild(d);
@@ -1484,11 +1879,11 @@ function setPersonaUI(){
   const p=state.persona; const v=dv(p);
   $("#chat").dataset.voice=v; $("#compose").dataset.voice=v;
   $("#pmark").className="mark"+(p==="auto"?" decide":"");
-  const cn=customName(p);
-  $("#pname").textContent = cn || baseName(p); $("#prole").textContent = cn ? baseName(p) : "";
-  const seg=$("#friendSeg"); seg.hidden = p!=="friend";
+  $("#pname").textContent = displayName(p); $("#prole").textContent = p==="auto" ? "" : (isCustom(p) ? relLabel(p) : (customName(p) ? baseName(p) : ""));
+  const seg=$("#friendSeg"); seg.hidden = !isFriendLike(p);
   seg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.m===state.friendMode?"true":"false"));
-  $("#pkicker").textContent = prettyDay(TODAY) + (state.mood ? " · "+t("moods")[state.mood] : "");
+  $("#pkicker").textContent = prettyDay(TODAY);
+  $(".pmood").hidden=false; renderMoods(); applyMood();
   $("#delDay").hidden=true; $("#pageBreathe").hidden=false;
   $("#box").placeholder=t("phAll");
 }
@@ -1499,6 +1894,7 @@ function showView(w){
 function choose(p){
   rollDayIfNeeded();
   state.persona=p; state.viewing=null; state.careHold=false;
+  if(state.settings.lastTo!==p) setTo(p);
   const st=p!=="auto" && p!=="diary" ? V(p).style : null;
   if(st && !st.grammarTried){ st.grammarTried=true; refineSummary(p, st.importedAt, st.traits||{}, st.samples||[], st.rhythm, st.bursts, st.exchanges||null); }
   state.griefCheck = (st && st.absent && Date.now()-(st.lastCheck||st.importedAt||0) > IMPORT_LIMITS.checkEveryDays*864e5) ? p : null;
@@ -1508,9 +1904,16 @@ function choose(p){
 
 /* ---------- prompts ---------- */
 function voiceFor(p,mode){
-  let base = p==="friend" ? FRIEND_VOICE[mode||"facts"] : PERSONAS[p].voice;
-  const v=V(p), d=DEFAULT_VOICES[p];
-  if(v.rel && v.rel.trim() && v.rel.trim().toLowerCase()!==d.rel) base=base.replace("her "+d.rel, "her "+v.rel.trim()).replace(/'beta'/,"whatever endearment fits");
+  const v=V(p), d=defOf(p), rk=relKey(p);
+  let base;
+  if(p==="diary") base=PERSONAS.diary.voice;
+  else if(rk==="bestfriend") base=FRIEND_VOICE[mode||"facts"];
+  else if(rk==="mother") base=PERSONAS.mom.voice;
+  else if(rk==="spouse") base=PERSONAS.spouse.voice;
+  else if(REL_VOICE[rk]) base=REL_VOICE[rk];
+  else base=`Voice: her ${relEn(p)}. Warm and natural, the way a ${relEn(p)} who cares about her would write to her. Keep their real place in her life in mind${(REL[rk]||{}).work?": caring, but with the boundaries of that relationship":""}.`;
+  if(BUILTIN.includes(p)){ if(v.rel && v.rel.trim() && v.rel.trim().toLowerCase()!==d.rel) base=base.replace("her "+d.rel, "her "+v.rel.trim()).replace(/'beta'/,"whatever endearment fits"); }
+  else if(v.rel && v.rel.trim() && REL_VOICE[rk]===undefined && rk!=="other") base+=` She calls this relationship "${v.rel.trim()}".`;
   if(p!=="diary" && v.name && v.name!==d.name) base+=` She calls you "${v.name}".`;
   if(v.about && v.about.trim()) base+=` What she has told you about this person: ${v.about.trim()}. Use it only to get the voice right; never invent memories from it.`;
   const st=v.style;
@@ -1555,22 +1958,27 @@ ${latest.text}
 Write only your reply to her latest entry, in the voice above.`;
 }
 async function pickVoice(sample,text){
-  const hidden=["diary","friend","spouse","mom"].filter(x=>!visible(x));
-  const r=await sample.json(`A private diary app can answer in one of these voices:
-- diary: she mainly wants to be heard, no advice
-- friend_facts: she wants honest, practical truth from a best friend
-- friend_sympathy: she wants a best friend fully on her side, no advice
-- spouse: she wants comfort plus a gentle bit of perspective
-- mom: she's hurting or low and needs unconditional love and a smile
-${hidden.length?`Don't choose: ${hidden.join(", ")}.\n`:""}${state.mood?`Her mood: ${state.mood}.\n`:""}Her entry:
+  const opts=[]; const map={};
+  visiblePeople().forEach((p,i)=>{
+    const who = p==="diary" ? "she mainly wants to be heard, no advice" : `her ${relEn(p)}${customName(p)?` (${customName(p)})`:""}`;
+    if(isFriendLike(p)){
+      opts.push(`- p${i}_facts: ${who}, honest practical truth`); map[`p${i}_facts`]={p,mode:"facts"};
+      opts.push(`- p${i}_sympathy: ${who}, fully on her side, no advice`); map[`p${i}_sympathy`]={p,mode:"sympathy"};
+    } else { opts.push(`- p${i}: ${who}${REL_HINT[relKey(p)]?`, ${REL_HINT[relKey(p)]}`:""}`); map[`p${i}`]={p}; }
+  });
+  const keys=Object.keys(map);
+  if(keys.length===1) return map[keys[0]];
+  const r=await sample.json(`A private diary app can answer as one of these people in her life:
+${opts.join("\n")}
+Pick who she most needs right now.${state.mood?`\nHer mood: ${state.mood}.`:""}
+Her entry:
 ${text}
 
-Reply with only JSON like {"voice":"mom"}.`,{modelTier:"quick",cache:false});
-  let v=r&&r.voice;
-  if(!(v && visible(String(v).split("_")[0]) && /^(diary|friend_facts|friend_sympathy|spouse|mom)$/.test(v))) v=["mom","friend_sympathy","spouse","diary"].find(x=>visible(x.split("_")[0]))||"diary";
-  if(v==="friend_facts") return {p:"friend",mode:"facts"};
-  if(v==="friend_sympathy") return {p:"friend",mode:"sympathy"};
-  return {p:v};
+Reply with only JSON like {"voice":"${keys[0]}"}.`,{modelTier:"quick",cache:false});
+  const v=r&&r.voice;
+  if(v && map[v]) return map[v];
+  const fb=["mom","friend","spouse","diary"].find(visible) || visiblePeople()[0] || "diary";
+  return isFriendLike(fb) ? {p:fb,mode:"sympathy"} : {p:fb};
 }
 
 /* ---------- reply ---------- */
@@ -1580,12 +1988,13 @@ async function reply(p, mode){
   state.busy=true; updateSend();
   const ctl=new AbortController(); state.ctl=ctl; $("#stopBtn").style.display="grid";
   const d=document.createElement("div"); d.className="entry them"; d.setAttribute("aria-busy","true");
-  d.innerHTML=`<p class="who-l"></p><div class="body"><p class="thinking">${esc(t("thinking"))}</p></div>`;
+  d.dataset.voice=dv(p);
+  d.innerHTML=`<p class="who-l"></p><div class="body"><p class="writing"><span>${esc(p==="auto"?t("finding"):t("isWriting",{n:vname(p)}))}</span><i aria-hidden="true"></i></p></div>`;
   $("#entries").appendChild(d); if(d.scrollIntoView) d.scrollIntoView({behavior:"smooth",block:"end"});
   const origP=p, origMode=mode;
   let lastMe=[...state.entries].reverse().find(e=>e.role==="me");
   try{
-    if(p==="auto"){ d.querySelector(".who-l").textContent=t("finding"); const pick=await pickVoice(sample,lastMe.text); p=pick.p; mode=pick.mode||mode; }
+    if(p==="auto"){ const pick=await pickVoice(sample,lastMe.text); p=pick.p; mode=pick.mode||mode; const ws=d.querySelector(".writing span"); if(ws) ws.textContent=t("isWriting",{n:vname(p)}); }
     d.dataset.voice=dv(p);
     d.querySelector(".who-l").textContent=personaLabel({persona:p,mode});
     const bodyEl=d.querySelector(".body");
@@ -1595,16 +2004,17 @@ async function reply(p, mode){
     if(/\[\[DANGER\]\]/.test(raw)){ raiseCare("danger", hindiish(lastMe.text)?"hi":L()); state.careHold=true; }
     else if(/\[\[CARE\]\]/.test(raw)){ raiseCare("crisis", hindiish(lastMe.text)?"hi":L()); state.careHold=true; }
     const styled = p!=="diary" && p!=="auto" && !!V(p).style;
-    const entry={id:uid(),role:"them",persona:p,mode:p==="friend"?mode:null,text:styled?splitReplyLines(clean).join("\n"):clean,ts:Date.now(),replyTo:lastMe.id,styled};
+    const entry={id:uid(),role:"them",persona:p,mode:isFriendLike(p)?mode:null,text:styled?splitReplyLines(clean).join("\n"):clean,ts:Date.now(),replyTo:lastMe.id,styled};
     state.entries.push(entry);
     state.busy=false; state.fresh=entry.id;
+    if(state.persona==="auto"){ $("#chat").dataset.voice=dv(p); $("#compose").dataset.voice=dv(p); }
     save(); renderEntries(state.entries,false); state.fresh=null;
     announce(t("replied",{n:personaLabel(entry),r:clean}));
     maybeNudge();
   }catch(e){
     state.busy=false;
     const kept=e&&e.text?stripHidden(e.text).trim():"";
-    if(kept){ state.entries.push({id:uid(),role:"them",persona:p,mode:p==="friend"?mode:null,text:kept,ts:Date.now(),replyTo:lastMe.id,partial:true}); save(); }
+    if(kept){ state.entries.push({id:uid(),role:"them",persona:p,mode:isFriendLike(p)?mode:null,text:kept,ts:Date.now(),replyTo:lastMe.id,partial:true}); save(); }
     renderEntries(state.entries,false);
     if(!e||e.code!=="cancelled"){
       const code=e&&e.code; const canRetry = code!=="not_granted";
@@ -1628,7 +2038,7 @@ async function send(){
   if(crisisNow) state.careHold=true;
   renderEntries(state.entries,false); save();
   if(crisisNow){ announce(t("careH")); return; }
-  await reply(state.persona, state.friendMode);
+  await reply(state.persona, isFriendLike(state.persona)?state.friendMode:null);
 }
 
 function maybeNudge(){
@@ -1663,20 +2073,28 @@ $("#micBtn").onclick=()=>{
   }catch(e){ stopRec(); $("#hint").textContent="Voice typing couldn't start here. Use your keyboard's microphone instead."; }
 };
 
-/* ---------- breathing ---------- */
-let bTimers=[];
+/* ---------- breathing (spec §4.6): in 4 · hold 2 · out 6, five rounds, full screen ---------- */
+let bTimers=[], bFrom=null;
 function startBreathe(){
-  openLayer("#breathe"); const c=$("#circle"), w=$("#bword"), left=$("#bleft");
-  const steps=[[t("bIn"),4,"in"],[t("bHold"),4,"in"],[t("bOut"),6,"out"]];
-  let s=0, rounds=4;
+  bTimers.forEach(clearTimeout); bTimers=[];
+  bFrom = ($("#chat").style.display==="block" && state.persona && !state.viewing) ? state.persona : null;
+  const lay=$("#breathe"); if(bFrom) lay.dataset.voice=dv(bFrom); else delete lay.dataset.voice;
+  $("#bMid").hidden=false; $("#bDoneBox").hidden=true;
+  const c=$("#circle"), w=$("#bword"), left=$("#bleft");
+  c.className="circle"; w.textContent=t("bIn"); left.textContent="";
+  openLayer("#breathe");
+  const steps=[[t("bIn"),4,"in"],[t("bHold"),2,"hold"],[t("bOut"),6,"out"]]; const rounds=5; let s=0;
   for(let r=0;r<rounds;r++) for(const [word,sec,cls] of steps){
-    bTimers.push(setTimeout(()=>{ w.textContent=word; c.className="circle "+cls; left.textContent=t("bRound",{a:r+1,b:rounds}); },s*1000)); s+=sec;
+    bTimers.push(setTimeout(()=>{ w.textContent=word; c.className="circle "+cls; left.textContent=t("bCount",{a:r+1,b:rounds,s:sec}); try{ navigator.vibrate&&navigator.vibrate(8); }catch(e){} },s*1000)); s+=sec;
   }
-  bTimers.push(setTimeout(()=>{ w.textContent=t("bWell"); c.className="circle"; left.textContent=t("bCalm"); },s*1000));
+  bTimers.push(setTimeout(()=>{ $("#bMid").hidden=true; $("#bDoneBox").hidden=false; $("#bWrite").focus(); },s*1000));
 }
-function stopBreathe(){ bTimers.forEach(clearTimeout); bTimers=[]; $("#circle").className="circle"; $("#bword").textContent=t("bReady"); $("#bleft").textContent=""; closeLayer("#breathe"); }
+function stopBreathe(){ bTimers.forEach(clearTimeout); bTimers=[]; $("#circle").className="circle"; $("#bleft").textContent=""; closeLayer("#breathe"); }
 $$("[data-breathe]").forEach(b=>b.onclick=startBreathe);
-$("#bDone").onclick=stopBreathe;
+$("#bClose").onclick=stopBreathe;
+$("#bDone").onclick=()=>{ stopBreathe(); if($("#chat").style.display==="block"){ state.viewing=null; renderPicker(); showView("picker"); } };
+$("#bWrite").onclick=()=>{ const p=bFrom||currentTo(); stopBreathe(); choose(p); };
+
 /* ---------- 08 Hide: a stock-style working calculator. PIN then = opens the diary. ---------- */
 let cExpr="", cJust=false, cLast="", cFails=0, cWait=0, cHold=null, pendingWelcome=false, cHist=[];
 function veilOpen(){ return $("#veil").classList.contains("open"); }
@@ -1728,12 +2146,12 @@ function showVeil(){
   $$(".layer.open").forEach(l=>{ l.classList.remove("open"); l.setAttribute("aria-hidden","true"); });
   if(rec) stopRec();
   cExpr=""; cJust=false; $("#calcHistList").hidden=true; calcRender();
-  $("#veil").classList.add("open"); setInert(true); document.title="Calculator";
+  $("#veil").classList.add("open"); setInert(true); document.title="Calculator"; if(window.__setIcon) window.__setIcon(true);
   setTimeout(()=>{ const k=$("#calcKeys button"); if(k) k.focus(); },20);
 }
 function hideNow(){ state.settings.hidden=true; saveSettings("hidden"); showVeil(); }
 function unhide(){
-  $("#veil").classList.remove("open"); document.title="Dear Mann";
+  $("#veil").classList.remove("open"); document.title="Dear Mann"; if(window.__setIcon) window.__setIcon(false);
   if(!isLocked()) setInert(false);
   state.settings.hidden=false; saveSettings("hidden");
   renderPicker(); if(state.persona && !state.viewing && $("#chat").style.display==="block") renderEntries(state.entries,false);
@@ -1842,9 +2260,10 @@ function viewDay(d){
   const s=daySummary(d.entries||[]); const v=s.voice||"diary";
   $("#chat").dataset.voice=dv(v); $("#compose").dataset.voice=dv(v);
   $("#pmark").className="mark"+(v==="auto"?" decide":"");
-  $("#pname").textContent=prettyDay(d.date); $("#prole").textContent="";
+  $("#pname").textContent=isPerson(v)?displayName(v):prettyDay(d.date); $("#prole").textContent=isPerson(v)?prettyDay(d.date):"";
   $("#friendSeg").hidden=true; $("#pageBreathe").hidden=true; $("#delDay").hidden=false;
-  $("#pkicker").textContent = s.mood ? t("moods")[s.mood] : "";
+  $("#pkicker").textContent = prettyDay(d.date) + (s.mood ? " · "+t("moods")[s.mood] : "");
+  $(".pmood").hidden=true; applyMood(s.mood||null);
   showView("chat"); renderEntries(d.entries||[],true);
 }
 async function deletePage(date){
@@ -1936,30 +2355,39 @@ function voiceSub(p){
   const v=V(p);
   if(v.hidden) return t("vRowHidden");
   if(v.style) return t("vRowStyle",{p:v.style.person||customName(p)||baseName(p), n:(v.style.bursts||[]).length});
+  if(isCustom(p)) return groupName(groupOf(p));
   return t("lines")[p];
 }
 function renderVoices(){
   const box=$("#voiceCards"); box.innerHTML="";
-  ["diary","friend","spouse","mom"].forEach(p=>{
+  people().forEach(p=>{
     const v=V(p); const cn=customName(p);
     const row=document.createElement("div"); row.className="vrow"; row.dataset.voice=dv(p);
     row.innerHTML=`<details><summary><span class="mark"><span></span></span><span class="vr-text"><span class="vr-name">${esc(baseName(p))}${cn?` · ‘${esc(cn)}’`:""}</span><span class="vr-sub">${esc(voiceSub(p))}</span></span></summary>
       <div class="vbody">${p==="diary"?`<p class="sub">${esc(t("lines").diary)}</p>`:`<label class="sub" for="vn-${p}">${esc(t("vCall"))}</label><input class="field" id="vn-${p}" data-v="${p}" data-f="name" maxlength="30" value="${esc(v.name)}">
-      <label class="sub" for="vr-${p}">${esc(t("vWho"))}</label><input class="field" id="vr-${p}" data-v="${p}" data-f="rel" maxlength="30" value="${esc(v.rel)}" placeholder="${esc(DEFAULT_VOICES[p].rel)}">
-      <label class="sub" for="va-${p}">${esc(t("vAbout"))}</label><input class="field" id="va-${p}" data-v="${p}" data-f="about" maxlength="140" value="${esc(v.about)}" placeholder="${esc(t("vAboutPh"))}">`}${styleLine(p)}</div></details>
+      <label class="sub" for="vr-${p}">${esc(t("vWho"))}</label><input class="field" id="vr-${p}" data-v="${p}" data-f="rel" maxlength="30" value="${esc(v.rel)}" placeholder="${esc(relLabel(p))}">
+      <label class="sub" for="va-${p}">${esc(t("vAbout"))}</label><input class="field" id="va-${p}" data-v="${p}" data-f="about" maxlength="140" value="${esc(v.about)}" placeholder="${esc(t("vAboutPh"))}">`}${styleLine(p)}${isCustom(p)?`<button type="button" class="btn btn-ghost" data-rmperson="${p}" style="color:var(--danger);margin-top:8px">${icon("trash-2")}${esc(t("removeP",{n:vname(p)}))}</button>`:""}</div></details>
       <button class="switch" type="button" role="switch" data-vis="${p}" aria-checked="${v.hidden?"false":"true"}" aria-label="${esc(t("vRowShowL",{n:vname(p)}))}"></button>`;
     box.appendChild(row);
   });
+  box.insertAdjacentHTML("beforeend",`<button type="button" class="btn btn-ghost" id="addFromSet" style="margin-top:6px">${icon("plus")}${esc(t("addSomeone"))}</button><p class="sub" style="margin:4px 0 0;color:var(--faint);font-size:12.5px">${esc(t("vRowsFoot"))}</p>`);
   $("#remember").checked = state.settings.remember!==false;
 }
 $("#voiceCards").addEventListener("click",async e=>{
   const sw=e.target.closest("[data-vis]");
   if(sw){ const p=sw.dataset.vis; const turnOn = sw.getAttribute("aria-checked")!=="true";
-    const shown=["diary","friend","spouse","mom"].filter(x=>x===p?turnOn:!V(x).hidden).length; if(!shown) return;
-    state.settings.voices=state.settings.voices||{}; const cur=Object.assign({}, DEFAULT_VOICES[p], state.settings.voices[p]||{}); cur.hidden=!turnOn; state.settings.voices[p]=cur;
+    const shown=people().filter(x=>x===p?turnOn:!V(x).hidden).length; if(!shown){ toast(t("keepOne")); return; }
+    state.settings.voices=state.settings.voices||{}; const cur=Object.assign({}, defOf(p), state.settings.voices[p]||{}); cur.hidden=!turnOn; state.settings.voices[p]=cur;
     saveSettings("voices"); renderVoices(); renderPicker();
     if(state.persona && state.persona!=="auto" && !visible(state.persona)) state.persona="auto";
     const again=$(`[data-vis="${p}"]`); if(again) again.focus(); return; }
+  if(e.target.closest("#addFromSet")){ openAdd(null); return; }
+  const rp=e.target.closest("[data-rmperson]");
+  if(rp){ const p=rp.dataset.rmperson; const n=vname(p);
+    const ok=await modal({title:t("removePT",{n}),body:`<p>${esc(t("removePB",{n}))}</p>`,ok:t("removePOk"),cancel:t("keepIt"),danger:true}); if(!ok) return;
+    delete state.settings.voices[p]; state.settings.recentTo=(state.settings.recentTo||[]).filter(x=>x!==p); if(state.settings.lastTo===p) state.settings.lastTo=null;
+    if(state.persona===p) state.persona=null;
+    await saveSettings("voices","recentTo","lastTo"); renderVoices(); renderPicker(); return; }
   const im=e.target.closest("[data-import]"); if(im){ openImport(im.dataset.import); return; }
   const rm=e.target.closest("[data-rmstyle]"); if(rm){ if(await removeStyle(rm.dataset.rmstyle)){ renderVoices(); renderPicker(); } }
 });
@@ -1969,8 +2397,8 @@ $("#voiceCards").addEventListener("change",e=>{
     v.style.rqOverride=v.style.rqOverride||{}; if(rq.value) v.style.rqOverride[tag]=+rq.value; else delete v.style.rqOverride[tag]; saveSettings("voices"); return; }
   const el=e.target.closest("[data-v]"); if(!el) return;
   const p=el.dataset.v, f=el.dataset.f; state.settings.voices=state.settings.voices||{};
-  const cur=Object.assign({}, DEFAULT_VOICES[p], state.settings.voices[p]||{});
-  cur[f]=el.value.trim() || (f==="about"?"":DEFAULT_VOICES[p][f]);
+  const cur=Object.assign({}, defOf(p), state.settings.voices[p]||{});
+  cur[f]=el.value.trim() || (f==="about"?"":defOf(p)[f]);
   state.settings.voices[p]=cur; saveSettings("voices"); renderPicker();
   const sum=el.closest(".vrow").querySelector(".vr-name"); const cn=customName(p); if(sum) sum.textContent=baseName(p)+(cn?` · ‘${cn}’`:"");
   if(state.persona) setPersonaUI();
@@ -2280,13 +2708,14 @@ async function chatTextFrom(file){
 const IMP = {};
 function resetImp(slot){ Object.assign(IMP,{step:1,slot:slot||null,fileName:"",years:null,msgs:null,senders:null,sender:null,me:null,react:false,mode:"burst",cands:null,picked:null,traits:null,rhythm:null,grammar:null,ack1:false,status:"",absent:false,err:"",saved:0}); }
 function forgetChat(){ IMP.msgs=null; IMP.senders=null; IMP.cands=null; IMP.picked=null; }
-function openImport(slot){ resetImp(slot && ["mom","spouse","friend"].includes(slot) ? slot : null); renderImport(); openLayer("#importLayer"); }
+function openImport(slot){ resetImp(slot && isPerson(slot) && slot!=="diary" ? slot : null); renderImport(); openLayer("#importLayer"); }
+function importTargets(){ const l=visiblePeople().filter(p=>p!=="diary"); if(IMP.slot && !l.includes(IMP.slot)) l.unshift(IMP.slot); return l; }
 $$("#importLayer [data-close]").forEach(el=>el.addEventListener("click",forgetChat));
 function chatYears(msgs){
   const ys=msgs.map(m=>{ const p=String(m.day||"").split(/[\/.\-]/); let y=p[2]||""; if(y.length===2) y="20"+y; return +y||null; }).filter(Boolean);
   return ys.length ? {a:Math.min(...ys), b:Math.max(...ys)} : null;
 }
-function impSlotDefault(){ return IMP.slot || ["mom","spouse","friend"].find(visible) || "mom"; }
+function impSlotDefault(){ return IMP.slot || ["mom","spouse","friend"].find(visible) || visiblePeople().find(p=>p!=="diary") || "mom"; }
 function renderImport(){
   const b=$("#importBody"); const step=IMP.step; const them=IMP.sender||""; const slot=impSlotDefault();
   $("#importLayer").dataset.voice=dv(slot);
@@ -2329,7 +2758,7 @@ function renderImport(){
       <div class="rcards" role="radiogroup" aria-labelledby="qThem">${IMP.senders.map((s,i)=>`<label class="rcard"><input type="radio" name="impSender" value="${i}" ${s.name===IMP.sender?"checked":""}><span class="rt"><b>${esc(s.name)}</b><small>${esc(t("impMsgs",{n:s.count.toLocaleString(loc())}))}</small></span></label>`).join("")}</div>
       ${IMP.react && IMP.senders.length>2 ? `<p class="qlabel" id="qMe">${esc(t("impWhoMe"))}</p><div class="rcards" role="radiogroup" aria-labelledby="qMe">${IMP.senders.map((s,i)=>`<label class="rcard"><input type="radio" name="impMe" value="${i}" ${s.name===IMP.me?"checked":""}><span class="rt"><b>${esc(s.name)}</b></span></label>`).join("")}</div>` : ""}
       <p class="qlabel" id="qVoice">${esc(t("impVoiceQ",{p:IMP.sender}))}</p>
-      <div class="rcards" role="radiogroup" aria-labelledby="qVoice">${["friend","spouse","mom"].map(p=>`<label class="rcard" data-voice="${p}"><input type="radio" name="impSlot" value="${p}" ${p===slot?"checked":""}><span class="mark"><span></span></span><span class="rt"><b>${esc(baseName(p))}${customName(p)?` · ${esc(customName(p))}`:""}</b></span></label>`).join("")}</div>
+      <div class="rcards" role="radiogroup" aria-labelledby="qVoice">${importTargets().map(p=>`<label class="rcard" data-voice="${dv(p)}"><input type="radio" name="impSlot" value="${esc(p)}" ${p===slot?"checked":""}><span class="mark"><span></span></span><span class="rt"><b>${esc(displayName(p))}</b><small>${esc(isCustom(p)?relLabel(p):(customName(p)?baseName(p):""))}${V(p).style?` · ${esc(t("textsLike"))}`:""}</small></span></label>`).join("")}</div>
       <button class="btn btn-primary wide" type="button" id="impNext2">${esc(t("cont"))}</button>`;
     $$('input[name="impSender"]').forEach(r=>r.onchange=()=>{ IMP.sender=IMP.senders[+r.value].name; if(IMP.me===IMP.sender) IMP.me=(IMP.senders.find(x=>x.name!==IMP.sender)||{}).name||null; renderImport(); });
     $$('input[name="impMe"]').forEach(r=>r.onchange=()=>{ IMP.me=IMP.senders[+r.value].name; });
@@ -2402,7 +2831,7 @@ async function saveImport(){
   const before=JSON.parse(JSON.stringify(state.settings.voices||{}));
   try{
     state.settings.voices=state.settings.voices||{};
-    const cur=Object.assign({}, DEFAULT_VOICES[slot], state.settings.voices[slot]||{});
+    const cur=Object.assign({}, defOf(slot), state.settings.voices[slot]||{});
     cur.style={version:2, source:"whatsapp", person:String(IMP.sender||"").slice(0,40), summary:localSummary(traits), traits, rhythm, bursts, samples, absent, importedAt, lastCheck:importedAt, refined:false};
     cur.style.grammarFacts=IMP.grammar||[];
     if(exchanges){ cur.style.exchanges=exchanges; cur.style.reactions=""; cur.style.reactq=reactionQuotient(exchanges); }
@@ -2456,7 +2885,7 @@ Reply with only JSON like ${exchanges&&exchanges.length?'{"summary":"...","react
 async function removeStyle(p){
   const ok=await modal({title:t("rmStyleT"),body:`<p>${esc(t("rmStyleB",{v:vname(p)}))}</p>`,ok:t("rmStyleOk"),danger:true});
   if(!ok) return false;
-  const cur=Object.assign({}, DEFAULT_VOICES[p], (state.settings.voices||{})[p]||{}); delete cur.style;
+  const cur=Object.assign({}, defOf(p), (state.settings.voices||{})[p]||{}); delete cur.style;
   state.settings.voices=state.settings.voices||{}; state.settings.voices[p]=cur; await saveSettings("voices");
   return true;
 }
@@ -2477,7 +2906,7 @@ function styleLine(p){
 }
 function renderImpNudge(){
   const box=$("#impNudge"); if(!box) return;
-  const anyStyle=["mom","spouse","friend"].some(p=>V(p).style);
+  const anyStyle=people().some(p=>p!=="diary" && V(p).style);
   if(anyStyle || state.settings.importNudgeOff){ box.innerHTML=""; return; }
   box.innerHTML=`<div class="impnudge"><p>${esc(t("nudgeImpP"))}</p><div class="row"><button class="btn btn-ghost" type="button" id="nudgeImpGo">${icon("message-circle")}${esc(t("nudgeImpGo"))}</button><button class="btn btn-ghost" type="button" id="nudgeImpNo" style="color:var(--muted)">${esc(t("notNow"))}</button></div></div>`;
   $("#nudgeImpGo").onclick=()=>openImport();
@@ -2510,7 +2939,21 @@ async function hashPin(pin, salt){
   try{ if(window.crypto && crypto.subtle){ const b=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data)); return "s256:"+Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join(""); } }catch(e){}
   let h=2166136261; for(let i=0;i<data.length;i++){ h^=data.charCodeAt(i); h=Math.imul(h,16777619); } return "fnv:"+(h>>>0).toString(16);
 }
-let fails=0, waitUntil=0, hiddenAt=0, unlockResolve=null;
+let fails=0, waitUntil=0, hiddenAt=0, unlockResolve=null, lockouts=0, lockTimer=null;
+function lockTick(){
+  clearInterval(lockTimer);
+  const upd=()=>{ const left=Math.ceil((waitUntil-Date.now())/1000); const on=left>0;
+    $$("#keypad button").forEach(b=>b.disabled=on); const pi=$("#pinIn"); if(pi) pi.disabled=on;
+    if(on) $("#lockErr").textContent=t("waitPin",{s:left}); else { if(/\d/.test($("#lockErr").textContent) && waitUntil) $("#lockErr").textContent=""; clearInterval(lockTimer); }
+    return on; };
+  if(upd()) lockTimer=setInterval(upd,1000);
+}
+$("#keypad").addEventListener("mousedown",e=>e.preventDefault());
+$("#keypad").addEventListener("click",e=>{
+  const k=e.target.closest("[data-key]"); const inp=$("#pinIn"); if(!k||k.disabled||!inp) return;
+  if(k.dataset.key==="del") inp.value=inp.value.slice(0,-1); else if(inp.value.length<8) inp.value+=k.dataset.key;
+  $("#lockErr").textContent=""; inp.dispatchEvent(new Event("input"));
+});
 function setInert(on){ const el=$(".wrap"); if(on){ el.setAttribute("inert",""); el.setAttribute("aria-hidden","true"); $("#compose").setAttribute("inert",""); } else { el.removeAttribute("inert"); el.removeAttribute("aria-hidden"); $("#compose").removeAttribute("inert"); } }
 function isLocked(){ return !$("#lock").hidden; }
 function lockAfterVal(){ const s=state.settings; if(s.lockAfter) return s.lockAfter; if(s.lockOnOpen===false) return "never"; return s.pinHash ? "5" : "never"; }
@@ -2519,22 +2962,30 @@ function lockNow(){
   if(!state.settings.pinHash) return Promise.resolve();
   $$(".layer.open").forEach(l=>{ l.classList.remove("open"); l.setAttribute("aria-hidden","true"); });
   if(rec) stopRec();
-  $("#lockPin").innerHTML=pinField("pinIn","",{max:8}); wirePins($("#lockPin"));
-  $("#pinIn").setAttribute("aria-label",t("lockEnter"));
+  $("#lockPin").innerHTML=pinField("pinIn","",{max:state.settings.pinLen===4?4:8}); wirePins($("#lockPin"));
+  $("#pinIn").setAttribute("aria-label",t("pinAria"));
+  const nm=(state.settings.name||"").trim(); $("#lockH").textContent = nm ? t("lockWelcome",{n:nm}) : t("lockWelcome0");
   $("#pinIn").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); tryUnlock(); } });
-  $("#pinIn").addEventListener("input",()=>{ if($("#pinIn").value.length===4) tryUnlock(true); });
-  $("#lock").hidden=false; setInert(true); $("#lockErr").textContent=""; setTimeout(()=>$("#pinIn").focus(),20);
+  $("#pinIn").addEventListener("input",()=>{ const n=$("#pinIn").value.length; $("#pinGo").hidden = !(n>4 || (n===4 && state.settings.pinLen!==4)); if(n===4) tryUnlock(true); });
+  $("#pinGo").hidden=true; lockTick();
+  $("#lock").hidden=false; setInert(true); $("#lockErr").textContent=""; if(matchMedia("(pointer:fine)").matches) setTimeout(()=>$("#pinIn").focus(),20);
   return new Promise(r=>{ unlockResolve=r; });
 }
 async function tryUnlock(auto){
   const now=Date.now();
-  if(now<waitUntil){ if(!auto) $("#lockErr").textContent=t("waitPin",{s:Math.ceil((waitUntil-now)/1000)}); return; }
-  const h=await hashPin($("#pinIn").value.trim(), state.settings.pinSalt||"");
-  if(h===state.settings.pinHash){ fails=0; $("#lock").hidden=true; setInert(false); const r=unlockResolve; unlockResolve=null; r&&r(); renderPicker(); if(state.persona && !state.viewing && $("#chat").style.display==="block") renderEntries(state.entries,false); return; }
-  if(auto) return; // a 4-digit try may belong to a longer older PIN: wait for Enter
-  fails++; $("#pinIn").value=""; $("#pinIn").dispatchEvent(new Event("input"));
-  if(fails>=5){ waitUntil=Date.now()+30000; fails=0; $("#lockErr").textContent=t("waitPin",{s:30}); } else $("#lockErr").textContent=t("wrongPin");
-  $("#pinIn").focus();
+  if(now<waitUntil){ lockTick(); return; }
+  const typed=$("#pinIn").value.trim(); const wrap=$("#lockPin .pinwrap");
+  const h=await hashPin(typed, state.settings.pinSalt||"");
+  if(h===state.settings.pinHash){
+    if(state.settings.pinLen!==typed.length){ state.settings.pinLen=typed.length; saveSettings("pinLen"); }
+    if(wrap){ wrap.classList.add("ok"); await new Promise(r=>setTimeout(r,matchMedia("(prefers-reduced-motion: reduce)").matches?0:240)); }
+    fails=0; $("#lock").hidden=true; setInert(false); const r=unlockResolve; unlockResolve=null; r&&r(); renderPicker(); if(state.persona && !state.viewing && $("#chat").style.display==="block") renderEntries(state.entries,false); return; }
+  if(auto && state.settings.pinLen!==4) return; // an older PIN may be longer than 4 digits: wait for Unlock
+  fails++;
+  if(wrap){ wrap.classList.remove("shake"); void wrap.offsetWidth; wrap.classList.add("shake","bad"); setTimeout(()=>{ wrap.classList.remove("shake","bad"); $("#pinIn").value=""; $("#pinIn").dispatchEvent(new Event("input")); },600); }
+  else { $("#pinIn").value=""; $("#pinIn").dispatchEvent(new Event("input")); }
+  if(fails>=5){ lockouts++; waitUntil=Date.now()+Math.min(30000*Math.pow(2,lockouts-1),480000); fails=0; lockTick(); } else $("#lockErr").textContent=t("wrongPin");
+  if(matchMedia("(pointer:fine)").matches) $("#pinIn").focus();
 }
 $("#pinGo").onclick=()=>tryUnlock();
 $("#pinForgot").onclick=async()=>{
@@ -2563,9 +3014,9 @@ async function setPin(title, bodyText){
   if(!v) return false;
   const [a,b]=v.map(x=>x.trim());
   if(a!==b || !/^\d{4}$/.test(a)){ await modal({title:title||t("newPinT"),body:`<p>${esc(t("pinMismatch"))}</p>`,cancel:null}); return false; }
-  const salt=uid(); state.settings.pinSalt=salt; state.settings.pinHash=await hashPin(a,salt); state.settings.lockResetAt=null;
+  const salt=uid(); state.settings.pinSalt=salt; state.settings.pinHash=await hashPin(a,salt); state.settings.pinLen=4; state.settings.lockResetAt=null;
   if(!state.settings.lockAfter) state.settings.lockAfter="1";
-  await saveSettings("pinSalt","pinHash","lockResetAt","lockAfter");
+  await saveSettings("pinSalt","pinHash","pinLen","lockResetAt","lockAfter");
   if($("#setLayer").classList.contains("open")) renderLock();
   renderPicker();
   return true;
@@ -2579,11 +3030,98 @@ function resetBanner(){
   return d;
 }
 
+/* ---------- Add someone (spec §8.3): who are they, then how should they sound ---------- */
+const ADD={step:1,rel:null,group:null,typed:"",name:"",how:"default",elseOpen:false,q:"",askGroup:false};
+function relTitle(rk){ return (t("rel")||{})[rk] || (REL[rk]||REL.other).en; }
+function addGroup(){ return ADD.group || (ADD.rel ? (REL[ADD.rel]||REL.other).g : null); }
+function openAdd(group){
+  if(people().length>=MAX_PEOPLE+BUILTIN.length){ toast(t("keepOne")); return; }
+  Object.assign(ADD,{step:1,rel:null,group:null,typed:"",name:"",how:"default",elseOpen:false,q:"",askGroup:false,fromGroup:group||null});
+  renderAdd(); openLayer("#addLayer");
+}
+function renderAdd(focusSel){
+  const b=$("#addBody"); const lay=$("#addLayer"); const g=addGroup(); const rk=ADD.rel; const pr=pronoun(rk||"other");
+  if(g) lay.dataset.voice=GROUP_COLOR[g]; else delete lay.dataset.voice;
+  $("#addH").textContent = ADD.elseOpen ? t("elseH") : t("addH");
+  $("#addStep").textContent = t("addStep",{a:ADD.step});
+  const back = ADD.step===2 || ADD.elseOpen;
+  $("#addBack").innerHTML=icon(back?"arrow-left":"x"); $("#addBack").setAttribute("aria-label", back?t("back"):t("close"));
+  if(ADD.step===1 && ADD.elseOpen){
+    const q=ADD.q.trim().toLowerCase();
+    const match=rk2=>!q || relTitle(rk2).toLowerCase().includes(q) || String(REL[rk2].aka||"").toLowerCase().includes(q) || REL[rk2].en.includes(q);
+    let h=`<label class="search" style="margin-top:var(--space-3)">${icon("search")}<span class="sr">${esc(t("searchRel"))}</span><input id="relQ" type="search" autocomplete="off" placeholder="${esc(t("searchRel"))}" value="${esc(ADD.q)}"></label>`;
+    let any=false;
+    for(const grp of ["family","friends"]){
+      const list=ELSE_RELS[grp].filter(match); if(!list.length) continue; any=true;
+      h+=`<p class="gk" data-voice="${GROUP_COLOR[grp]}"><span class="dot8"></span>${esc(t("grp")[grp==="friends"?"friendsOthers":grp])}</p><ul class="rellist">`+list.map(r=>`<li><button type="button" data-rel="${r}"><span class="rn">${esc(relTitle(r))}</span>${REL[r].aka?`<span class="ra">${esc(REL[r].aka)}</span>`:""}</button></li>`).join("")+`</ul>`;
+    }
+    if(q) h+=`<button class="btn btn-ghost" type="button" id="useTyped" style="margin-top:var(--space-3)">${icon("plus")}${esc(t("useTyped",{r:ADD.q.trim()}))}</button>`;
+    if(ADD.askGroup){
+      h+=`<p class="qlabel" id="qGrp" style="margin-top:var(--space-4)">${esc(t("whichGroup"))}</p><div class="rcards" role="radiogroup" aria-labelledby="qGrp">${["family","partner","friends"].map(x=>`<label class="rcard" data-voice="${GROUP_COLOR[x]}"><input type="radio" name="addGrp" value="${x}"><span class="mark"><span></span></span><span class="rt"><b>${esc(t("grp")[x==="friends"?"friendsOthers":x])}</b></span></label>`).join("")}</div>`;
+    }
+    b.innerHTML=h;
+    const qi=$("#relQ"); qi.addEventListener("input",()=>{ ADD.q=qi.value; ADD.askGroup=false; renderAdd("#relQ"); const n=$("#relQ"); n.setSelectionRange(n.value.length,n.value.length); });
+    b.querySelectorAll("[data-rel]").forEach(x=>x.onclick=()=>{ ADD.rel=x.dataset.rel; ADD.typed=""; ADD.group=null; ADD.elseOpen=false; renderAdd("#addName"); });
+    const ut=$("#useTyped"); if(ut) ut.onclick=()=>{ ADD.askGroup=true; renderAdd('input[name="addGrp"]'); };
+    b.querySelectorAll('input[name="addGrp"]').forEach(r=>r.onchange=()=>{ ADD.rel="other"; ADD.typed=ADD.q.trim().slice(0,30); ADD.group=r.value; ADD.elseOpen=false; ADD.askGroup=false; renderAdd("#addName"); });
+  }
+  else if(ADD.step===1){
+    const quick=QUICK_RELS.filter(r=>!ADD.fromGroup || REL[r].g===ADD.fromGroup);
+    const tiles=(quick.length?quick:QUICK_RELS).map(r=>`<button type="button" class="tile" data-tile="${r}" data-voice="${GROUP_COLOR[REL[r].g]}" aria-pressed="${ADD.rel===r?"true":"false"}"><span class="dot8"></span><span class="tn">${esc(relTitle(r))}</span>${ADD.rel===r?icon("check"):""}</button>`).join("");
+    const elseOn = !!rk && !QUICK_RELS.includes(rk);
+    const elseLabel = elseOn ? (ADD.typed || relTitle(rk)) : t("elseT");
+    b.innerHTML=`<h1>${esc(t("whoH"))}</h1><div class="tiles" role="group" aria-label="${esc(t("whoH"))}">${tiles}</div>
+      <button type="button" class="else" id="elseBtn" aria-pressed="${elseOn?"true":"false"}"${elseOn?` data-voice="${GROUP_COLOR[g]}"`:""}><span class="et"><b>${esc(elseLabel)}</b><small>${esc(elseOn?t("change"):t("elseS"))}</small></span>${icon(elseOn?"check":"chevron-right")}</button>
+      ${rk?`<label class="flabel" for="addName">${esc(t("callWhat")[pr])}</label><input class="field" id="addName" maxlength="30" autocomplete="off" value="${esc(ADD.name)}" placeholder="${esc(ADD.typed||relTitle(rk))}">
+      <p class="helper"><span class="dot8" data-voice="${GROUP_COLOR[g]}"></span>${esc(t("under")[pr].replace("{g}",groupName(g)))}</p>`:""}
+      <div class="addfoot"><button class="btn btn-primary wide" type="button" id="addNext" ${rk?"":"disabled"}>${esc(t("cont"))}</button></div>`;
+    b.querySelectorAll("[data-tile]").forEach(x=>x.onclick=()=>{ ADD.rel=x.dataset.tile; ADD.typed=""; ADD.group=null; renderAdd(`[data-tile="${ADD.rel}"]`); });
+    $("#elseBtn").onclick=()=>{ ADD.elseOpen=true; ADD.q=""; ADD.askGroup=false; renderAdd("#relQ"); };
+    const nm=$("#addName"); if(nm) nm.addEventListener("input",()=>{ ADD.name=nm.value; });
+    if(nm) nm.addEventListener("keydown",e=>{ if(e.key==="Enter") $("#addNext").click(); });
+    $("#addNext").onclick=()=>{ if(!ADD.rel) return; ADD.name=(nm&&nm.value.trim()) || ADD.typed || relTitle(ADD.rel); ADD.step=2; renderAdd('input[name="addHow"]:checked'); };
+  }
+  else {
+    const n=ADD.name; const smp=(t("sample")||T.en.sample)[rk] || (t("sample")||T.en.sample).other;
+    const likeT=fill(t("likeSelf")[pr],{n}); const gentleT=t("gentle",{r:(ADD.typed||relTitle(rk)).toLowerCase()});
+    b.innerHTML=`<div class="wash"><h1>${esc(t("howH",{n}))}</h1>
+      <div role="radiogroup" aria-label="${esc(t("howH",{n}))}">
+      <label class="howcard"><span class="hrow"><input type="radio" name="addHow" value="like" ${ADD.how==="like"?"checked":""}><span><b>${esc(likeT)}</b><p>${esc(t("likeP"))}</p></span></span>
+        <span class="upbox" aria-hidden="true">${icon("upload")}<b>${esc(t("uploadT"))}</b><span>${esc(t("uploadS"))}</span></span></label>
+      <label class="howcard"><span class="hrow"><input type="radio" name="addHow" value="default" ${ADD.how!=="like"?"checked":""}><span><b>${esc(gentleT)}</b><p>${esc(t("addLater"))}</p></span></span>
+        <span class="bubble">${esc(smp)}</span></label></div>
+      <p class="lockline" style="justify-content:flex-start;margin:var(--space-3) 0 0">${icon("lock")}<span>${esc(t("onlyStyle"))}</span></p>
+      <div class="addfoot"><button class="btn btn-primary wide" type="button" id="addSave">${ADD.how==="like"?icon("file-text")+esc(t("chooseChat")):esc(t("savePerson"))}</button></div></div>`;
+    b.querySelectorAll('input[name="addHow"]').forEach(r=>r.onchange=()=>{ ADD.how=r.value; renderAdd('input[name="addHow"]:checked'); });
+    $("#addSave").onclick=saveAdd;
+  }
+  const f=focusSel && b.querySelector(focusSel); if(f) setTimeout(()=>f.focus(),20);
+}
+async function saveAdd(){
+  const rk=ADD.rel||"other", g=addGroup()||"friends";
+  const id="x"+uid();
+  state.settings.voices=state.settings.voices||{};
+  state.settings.voices[id]={name:ADD.name.slice(0,30), rel:ADD.typed||"", relKey:rk, group:g, about:"", hidden:false, addedAt:Date.now()};
+  await saveSettings("voices");
+  setTo(id); closeLayer("#addLayer"); renderPicker();
+  if($("#setLayer").classList.contains("open")) renderVoices();
+  if(ADD.how==="like") openImport(id); else toast(t("added",{n:vname(id)}));
+}
+$("#addBack").onclick=()=>{
+  if(ADD.step===2){ ADD.step=1; renderAdd("#addNext"); return; }
+  if(ADD.elseOpen){ ADD.elseOpen=false; ADD.askGroup=false; renderAdd("#elseBtn"); return; }
+  closeLayer("#addLayer");
+};
+
+/* ---------- toast (spec §3.7) ---------- */
+let toastTimer=null;
+function toast(msg, kind){
+  let el=$("#toast"); if(!el){ el=document.createElement("div"); el.id="toast"; el.className="toast"; el.setAttribute("role","status"); document.body.appendChild(el); }
+  el.className="toast"+(kind?" "+kind:""); el.textContent=msg; el.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove("show"),4000);
+}
+
 /* ---------- wire ---------- */
-$("#whoList").addEventListener("click",e=>{
-  const fm=e.target.closest("[data-fm]"); if(fm){ state.friendMode=fm.dataset.fm; choose("friend"); return; }
-  const b=e.target.closest("[data-p]"); if(b) choose(b.dataset.p);
-});
 $("#entries").addEventListener("click",async e=>{
   if(e.target.closest("[data-breathe-now]")){ startBreathe(); return; }
   if(e.target.closest("[data-carewrite]")){ state.careHold=false; renderEntries(state.entries,false); setTimeout(()=>$("#box").focus(),30); return; }
@@ -2613,7 +3151,7 @@ $("#entries").addEventListener("click",async e=>{
     if(!state.entries.some(x=>x.role==="me" && (isCrisis(x.text)||isDanger(x.text)))){ state.careShown=false; state.careHold=false; }
     await save(); renderEntries(state.entries,false); $("#box").focus(); return;
   }
-  const b=e.target.closest("[data-again]"); if(!b||state.busy) return; const p=b.dataset.again; reply(p, p==="friend"?state.friendMode:null);
+  const b=e.target.closest("[data-again]"); if(!b||state.busy) return; const p=b.dataset.again; reply(p, isFriendLike(p)?state.friendMode:null);
 });
 $("#backBtn").onclick=()=>{ state.viewing=null; renderPicker(); showView("picker"); };
 $("#friendSeg").addEventListener("click",e=>{ const b=e.target.closest("button[data-m]"); if(b){ state.friendMode=b.dataset.m; setPersonaUI(); } });

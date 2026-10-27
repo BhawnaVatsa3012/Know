@@ -5,42 +5,69 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Dear Mann owner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+<link rel="icon" href="/icons/favicon-32.png">
 <style>
-  :root { --bg:#16140F; --card:#201D17; --ink:#F2EDE4; --muted:#B4AC9F; --rule:#3A352C; --gold:#D6A75A; --danger:#E58B7B; --ok:#9CC59A; }
-  @media (prefers-color-scheme: light) { :root { --bg:#FAF7F1; --card:#FFFFFF; --ink:#201F1D; --muted:#5E5850; --rule:#DDD6CA; --gold:#9A6A22; --danger:#B4402F; --ok:#2E7A3A; } }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 Georgia, "Times New Roman", serif; }
-  main { max-width:520px; margin:0 auto; padding:28px 16px 48px; }
-  header { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:6px; }
-  h1 { font-weight:400; font-size:28px; margin:0; }
-  h1 b { color:var(--gold); font-weight:400; }
-  h2 { font-weight:400; font-size:19px; margin:26px 0 10px; display:flex; align-items:center; gap:8px; }
-  .count { font-size:13px; color:var(--bg); background:var(--gold); border-radius:999px; padding:1px 9px; }
-  .sub { color:var(--muted); margin:0 0 20px; font-size:15px; }
-  .card { background:var(--card); border:1px solid var(--rule); border-radius:14px; padding:18px; margin-bottom:12px; }
-  label { display:block; font-size:14px; color:var(--muted); margin:12px 0 6px; }
-  input { width:100%; font:inherit; font-size:17px; color:var(--ink); background:transparent; border:1px solid var(--rule); border-radius:10px; padding:11px 12px; }
-  input:focus, button:focus-visible { outline:2px solid var(--gold); outline-offset:1px; }
-  button { font:inherit; font-size:15px; color:var(--gold); background:transparent; border:1px solid var(--gold); border-radius:999px; padding:9px 16px; cursor:pointer; min-height:44px; }
-  button.primary { background:var(--gold); color:var(--bg); }
-  button.danger { color:var(--danger); border-color:var(--danger); }
-  button.quiet { border-color:var(--rule); color:var(--muted); }
-  button:disabled { opacity:.5; cursor:default; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-  .err { color:var(--danger); font-size:14px; min-height:1.2em; margin:10px 0 0; }
-  .ok { color:var(--ok); font-size:14px; }
-  .hint { color:var(--muted); font-size:14px; margin:8px 0 0; }
-  .who { font-size:17px; }
-  .meta { color:var(--muted); font-size:13px; margin-top:2px; }
-  .empty { color:var(--muted); font-size:15px; padding:6px 2px; }
-  details summary { cursor:pointer; color:var(--muted); font-size:14px; margin-top:28px; }
-  [hidden] { display:none !important; }
+  /* Dear Mann design tokens (spec §1). Light is the default here: owner work happens by day (spec §4.11). */
+  :root{--bg:#f3f2f2;--surface:#eae9e9;--raise:#faf9f8;--ink:#201f1d;--muted:#57534f;--faint:#6b6661;--line:rgba(32,31,29,.15);--line2:rgba(32,31,29,.32);
+    --gold:#b68235;--gold-t:#7d5411;--danger:#a33a2c;--danger-wash:#f6e7e4;--success:#2f6b36;--success-wash:#e6efe5;
+    --fh:'Cormorant Garamond',Georgia,serif;--fb:'Lora',Georgia,serif;color-scheme:light}
+  @media (prefers-color-scheme: dark){:root{--bg:#161413;--surface:#1f1c1a;--raise:#28241f;--ink:#ede7dd;--muted:#b3aa9e;--faint:#8f877c;--line:rgba(237,231,221,.13);--line2:rgba(237,231,221,.30);
+    --gold:#e1ad66;--gold-t:#e1ad66;--danger:#f08f80;--danger-wash:#2a1d1a;--success:#8fc48c;--success-wash:#1b231a;color-scheme:dark}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--fb);-webkit-font-smoothing:antialiased}
+  main{max-width:1040px;margin:0 auto;padding:8px 22px 48px}
+  .top{display:flex;align-items:center;gap:10px;height:64px;border-bottom:1px solid var(--line);margin-bottom:var(--g,18px)}
+  .top svg.wm{width:118px;height:auto;color:var(--ink);display:block}
+  .tag{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border:1px solid var(--line2);border-radius:12px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .tag svg{width:14px;height:14px}
+  .tag.active{color:var(--success);border-color:color-mix(in oklab,var(--success) 45%,transparent)}
+  .tag.pending{color:var(--ink)}
+  .top .sp{flex:1}
+  h1{font:400 30px/1.15 'Cormorant Garamond',Georgia,serif;letter-spacing:-.01em;margin:18px 0 6px}
+  h2{font:600 22px/1.2 var(--fh);margin:30px 0 10px;display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .count{font:400 13px/1 var(--fb);font-variant-numeric:lining-nums tabular-nums;color:var(--gold-t);border:1.5px solid var(--gold);border-radius:999px;padding:3px 9px}
+  .sub{color:var(--muted);margin:0 0 20px;font-size:14.5px}
+  .card{border:1px solid var(--line);border-radius:4px;padding:16px 18px;margin-bottom:10px;max-width:520px}
+  #vDash .card{max-width:none;display:grid;grid-template-columns:1fr auto;gap:6px 16px;align-items:center}
+  label{display:block;font-size:14px;color:var(--muted);margin:16px 0 8px}
+  input{width:100%;height:54px;font:400 16px var(--fb);color:var(--ink);background:transparent;border:1px solid var(--line2);border-radius:4px;padding:0 16px}
+  input::placeholder{color:var(--faint)}
+  input:focus{outline:none;border:1.5px solid var(--gold);padding:0 15.5px}
+  :focus-visible{outline:2px solid var(--gold-t);outline-offset:3px}
+  button{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 18px/1.2 var(--fh);color:var(--ink);background:transparent;border:1px solid var(--line2);border-radius:4px;padding:0 16px;cursor:pointer;min-height:44px;transition:background 120ms}
+  button:hover{background:color-mix(in oklab,var(--ink) 7%,transparent)}
+  button svg{width:18px;height:18px}
+  button.primary{border:1.5px solid var(--gold-t);color:var(--gold-t);min-height:48px}
+  button.primary:hover{background:color-mix(in oklab,var(--gold) 12%,transparent)}
+  #vClaim button.primary,#vLogin button.primary{width:100%;min-height:56px;font-size:19px}
+  button.danger{border:1.5px solid var(--danger);color:var(--danger)}
+  button.danger:hover{background:var(--danger-wash)}
+  button.quiet{border:0;color:var(--muted)}
+  button.icon{width:44px;min-height:44px;padding:0;border:0;border-radius:22px}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  #vDash .row{margin:0;grid-column:2;grid-row:1 / span 2;justify-content:flex-end}
+  .err{color:var(--danger);font-size:14px;min-height:1.2em;margin:10px 0 0}
+  .err:not(:empty){display:flex;gap:8px;align-items:flex-start;background:var(--danger-wash);border-radius:4px;padding:10px 12px}
+  .ok{color:var(--success);font-size:14px}
+  .hint{color:var(--faint);font-size:12.5px;margin:10px 0 0}
+  .who{font:600 20px/1.2 var(--fh);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .meta{color:var(--muted);font-size:14px}
+  .empty{color:var(--muted);font-size:15px;padding:4px 0}
+  .empty small{display:block;color:var(--faint);font-size:12.5px}
+  details summary{cursor:pointer;color:var(--gold-t);font:600 18px var(--fh);margin-top:30px;min-height:44px;display:flex;align-items:center}
+  [hidden]{display:none !important}
+  @media (max-width:600px){ #vDash .card{grid-template-columns:1fr} #vDash .row{grid-column:1;grid-row:auto;justify-content:flex-start;margin-top:8px} }
+  @media (prefers-reduced-motion: reduce){*{transition:none !important}}
 </style>
 </head>
 <body>
 <main>
-  <header><h1>Dear <b>M</b>ann owner</h1><button class="quiet" id="out" type="button" hidden>Sign out</button></header>
-  <p class="sub" id="sub">Approve or switch off the phones that use your Dear Mann.</p>
+  <header class="top"><span id="wmSlot"></span><span class="tag">Owner</span><span class="sp"></span><button class="icon" id="out" type="button" hidden aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></button></header>
+  <h1 id="title">Set up Dear Mann</h1>
+  <p class="sub" id="sub">Approve or switch off the phones that use your Dear Mann. You never see anyone's diary.</p>
 
   <section id="vLoad" class="card"><p class="empty" id="loadMsg">Loading…</p></section>
 
@@ -66,8 +93,8 @@
 
   <!-- Dashboard -->
   <section id="vDash" hidden>
-    <h2>Asking for access <span class="count" id="nPending" hidden></span></h2><div id="lPending"></div>
-    <h2>Have access</h2><div id="lActive"></div>
+    <h2>Waiting <span class="count" id="nPending" hidden></span></h2><div id="lPending"></div>
+    <h2>Active</h2><div id="lActive"></div>
     <h2>Switched off</h2><div id="lRevoked"></div>
     <p class="hint">This page refreshes by itself. Approving or switching off takes effect on that phone within about 30 seconds.</p>
     <p class="err" id="dErr"></p>
@@ -88,6 +115,11 @@
   const DEFAULT_URL = "https://wijnzuwcluzalvpobpbr.supabase.co/functions/v1/iknow-access?forceFunctionRegion=ap-south-1";
   let URL_ = DEFAULT_URL, session = "", timer = null;
   const ls = { get: (k) => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }, set: (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} } };
+  const svg = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const IC = { history: svg('<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>'),
+    check: svg('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>'), power: svg('<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>'),
+    ucheck: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/>'),
+    ux: svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/>') };
   const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   // This phone's own token (same one the diary uses), so the owner's phone gets access automatically.
@@ -106,7 +138,8 @@
     let d = {}; try { d = await r.json(); } catch (e) {}
     return { status: r.status, ok: r.ok, d };
   }
-  const show = (v) => ["vLoad", "vClaim", "vLogin", "vDash"].forEach((x) => { $(x).hidden = x !== v; });
+  const TITLES = { vLoad: "Dear Mann owner", vClaim: "Set up the owner account", vLogin: "Sign in", vDash: "Who can open Dear Mann" };
+  const show = (v) => { ["vLoad", "vClaim", "vLogin", "vDash"].forEach((x) => { $(x).hidden = x !== v; }); $("title").textContent = TITLES[v]; };
   const MSG = { bad_login: "That username and password don't match.", rate_limited: "Too many tries. Wait 15 minutes, then try again.",
     bad_invite: "That invite code doesn't match the one set for this Dear Mann.", weak_password: "Use at least 8 characters.",
     bad_username: "Use at least 3 characters for the username.", already_claimed: "An owner account already exists. Sign in instead.",
@@ -124,17 +157,18 @@
     const meta = d.status === "pending" ? "Asked " + ago(d.requested_at)
       : d.status === "active" ? (d.is_owner ? "This is you. " : "Approved " + ago(d.decided_at) + ". ") + (d.last_seen_at ? "Last used " + ago(d.last_seen_at) : "Not used yet")
       : "Switched off " + ago(d.decided_at);
-    const btns = d.status === "pending" ? `<button class="primary" data-id="${d.id}" data-to="active">Approve</button><button class="danger" data-id="${d.id}" data-to="revoked">Decline</button>`
-      : d.status === "active" ? (d.is_owner ? "" : `<button class="danger" data-id="${d.id}" data-to="revoked">Switch off</button>`)
+    const btns = d.status === "pending" ? `<button class="primary" data-id="${d.id}" data-to="active">${IC.ucheck}Approve</button><button data-id="${d.id}" data-to="revoked">${IC.ux}Decline</button>`
+      : d.status === "active" ? (d.is_owner ? "" : `<button class="danger" data-id="${d.id}" data-to="revoked">${IC.power}Switch off</button>`)
       : `<button data-id="${d.id}" data-to="active">Turn back on</button><button class="quiet" data-id="${d.id}" data-to="delete">Remove</button>`;
-    return `<div class="card"><div class="who">${name}</div><div class="meta">${meta}</div>${btns ? `<div class="row">${btns}</div>` : ""}</div>`;
+    const tag = d.status === "pending" ? `<span class="tag pending">${IC.history}Waiting</span>` : d.status === "active" ? `<span class="tag active">${IC.check}Active</span>` : `<span class="tag">${IC.power}Switched off</span>`;
+    return `<div class="card"><div class="who">${name}${tag}</div><div class="meta">${meta}</div>${btns ? `<div class="row">${btns}</div>` : ""}</div>`;
   }
   function render(list) {
     const by = (s) => list.filter((d) => d.status === s);
     const fill = (el, items, empty) => { $(el).innerHTML = items.length ? items.map(row).join("") : `<p class="empty">${empty}</p>`; };
-    fill("lPending", by("pending"), "No one is waiting.");
-    fill("lActive", by("active"), "No phones yet.");
-    fill("lRevoked", by("revoked"), "None.");
+    fill("lPending", by("pending"), "No one is waiting.<small>New requests appear here.</small>");
+    fill("lActive", by("active"), "No one is using Dear Mann yet. Share it to begin.");
+    fill("lRevoked", by("revoked"), "No phones are switched off.");
     const n = by("pending").length; $("nPending").hidden = !n; $("nPending").textContent = n;
     document.title = (n ? "(" + n + ") " : "") + "Dear Mann owner";
   }
@@ -195,6 +229,7 @@
     } catch (e) { $("pErr").textContent = msg("net"); }
   };
 
+  fetch("/icons/dear-mann-wordmark-mono.svg").then(r=>r.text()).then(t=>{ const m=t.match(/<svg[\s\S]*<\/svg>/); if(m){ $("wmSlot").innerHTML=m[0]; const el=$("wmSlot").firstElementChild; el.classList.add("wm"); el.setAttribute("role","img"); el.setAttribute("aria-label","Dear Mann"); el.querySelectorAll("title").forEach(x=>x.remove()); } }).catch(()=>{ $("wmSlot").textContent="Dear Mann"; });
   (async function start() {
     try { const a = await (await fetch("/api/access", { cache: "no-store" })).json(); if (a && a.accessUrl) URL_ = a.accessUrl; } catch (e) {}
     session = ls.get(SKEY);
