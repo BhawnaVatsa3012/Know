@@ -20,6 +20,7 @@
   --spouse:#ec9d89; --spouse-t:#ec9d89;
   --mom:#e6a0ba;    --mom-t:#e6a0ba;
   --decide:#b1b1e9; --decide-t:#b1b1e9;
+  --m-low:#93acd9; --m-anx:#c6aee8; --m-ang:#ef8b7b; --m-tired:#b0a898; --m-ok:#9ccb98; --m-happy:#f0c869;
   color-scheme:dark;
 }
 [data-theme="light"] {
@@ -32,6 +33,7 @@
   --spouse:#b75644; --spouse-t:#8f392a;
   --mom:#ad567b;    --mom-t:#863a5b;
   --decide:#6c68a9; --decide-t:#504c8a;
+  --m-low:#3d5d97; --m-anx:#6b4c9e; --m-ang:#a5382a; --m-tired:#686258; --m-ok:#3a7637; --m-happy:#86610c;
   color-scheme:light;
 }
 @media (prefers-color-scheme: light){
@@ -42,7 +44,8 @@
     --gold:#b68235; --gold-t:#7d5411; --danger:#a33a2c;
     --diary:#aa732b;  --diary-t:#784e14; --friend:#298787; --friend-t:#115e5e;
     --spouse:#b75644; --spouse-t:#8f392a; --mom:#ad567b; --mom-t:#863a5b;
-    --decide:#6c68a9; --decide-t:#504c8a; color-scheme:light;
+    --decide:#6c68a9; --decide-t:#504c8a;
+  --m-low:#3d5d97; --m-anx:#6b4c9e; --m-ang:#a5382a; --m-tired:#686258; --m-ok:#3a7637; --m-happy:#86610c; color-scheme:light;
   }
 }
 :root {
@@ -60,10 +63,13 @@
 [data-voice="spouse"] { --v:var(--spouse); --vt:var(--spouse-t); }
 [data-voice="mom"]    { --v:var(--mom);    --vt:var(--mom-t); }
 [data-voice="decide"] { --v:var(--decide); --vt:var(--decide-t); }
+[data-mood="Low"]{--mc:var(--m-low)} [data-mood="Anxious"]{--mc:var(--m-anx)} [data-mood="Angry"]{--mc:var(--m-ang)}
+[data-mood="Tired"]{--mc:var(--m-tired)} [data-mood="Okay"]{--mc:var(--m-ok)} [data-mood="Happy"]{--mc:var(--m-happy)}
 
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.65 var(--fb);min-height:100dvh}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.65 var(--fb);min-height:100dvh;transition:background-color 600ms var(--ease)}
+html[data-mood] body{background:color-mix(in oklab,var(--mc) 9%,var(--bg))}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--vt,var(--gold));outline-offset:3px;border-radius:var(--radius-md)}
@@ -139,6 +145,9 @@ a{color:inherit}
 .chip[aria-pressed="true"]{border:1.5px solid var(--gold);color:var(--gold-t);background:color-mix(in oklab,var(--gold) 10%,transparent)}
 .chip svg.i{width:16px;height:16px}
 .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--v)}
+.chip[data-mood] .dot{background:var(--mc)}
+.chip[data-mood][aria-pressed="true"]{border-color:var(--mc);color:var(--ink);background:color-mix(in oklab,var(--mc) 18%,transparent)}
+.chip[data-mood][aria-pressed="true"] svg.i{color:var(--mc)}
 .chip[data-voice="decide"] .dot{background:transparent;border:1.5px dashed var(--v)}
 .continue{color:var(--muted);font-size:15px;margin:0 0 var(--space-4)}
 
@@ -1439,7 +1448,9 @@ function bubbles(lines, fresh){ return `<div class="burst">${lines.map((x,i)=>{ 
 function updateComposer(){ $("#compose").hidden = !!state.viewing || !!state.careHold || $("#chat").style.display!=="block"; }
 
 /* ---------- 02 Home ---------- */
+function setMoodTint(m){ const r=document.documentElement; if(m) r.dataset.mood=m; else delete r.dataset.mood; }
 function renderPicker(){
+  setMoodTint(state.mood);
   const now=new Date();
   $("#today").textContent = now.toLocaleDateString(loc(),{weekday:"long"})+" · "+now.toLocaleTimeString(loc(),{hour:"numeric",minute:"2-digit"}).toLowerCase();
   const nm=(state.settings.name||"").trim(); $("#q").textContent = nm ? t("qN",{n:nm}) : t("q");
@@ -1461,7 +1472,7 @@ function renderPicker(){
   for(const [m] of MOODS){
     const b=document.createElement("button"); b.type="button"; b.className="chip"; b.dataset.mood=m;
     b.setAttribute("aria-pressed", state.mood===m?"true":"false");
-    b.innerHTML=(state.mood===m?icon("check"):"")+`<span>${esc(t("moods")[m])}</span>`;
+    b.innerHTML=(state.mood===m?icon("check"):`<span class="dot"></span>`)+`<span>${esc(t("moods")[m])}</span>`;
     b.onclick=()=>{ state.mood = state.mood===m ? null : m; renderPicker(); const again=$$("#moods .chip").find(x=>x.dataset.mood===m); if(again) again.focus(); };
     mc.appendChild(b);
   }
@@ -1538,6 +1549,7 @@ function setPersonaUI(){
   $("#box").placeholder=t("phAll");
 }
 function showView(w){
+  if(w==="picker"||(w==="chat"&&!state.viewing)) setMoodTint(state.mood);
   $("#picker").style.display=w==="picker"?"block":"none"; $("#chat").style.display=w==="chat"?"block":"none";
   updateComposer(); window.scrollTo(0,0);
 }
@@ -1890,6 +1902,7 @@ function viewDay(d){
   $("#pname").textContent=prettyDay(d.date); $("#prole").textContent="";
   $("#friendSeg").hidden=true; $("#pageBreathe").hidden=true; $("#delDay").hidden=false;
   $("#pkicker").textContent = s.mood ? t("moods")[s.mood] : "";
+  setMoodTint(s.mood);
   showView("chat"); renderEntries(d.entries||[],true);
 }
 async function deletePage(date){
