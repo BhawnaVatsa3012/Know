@@ -20,6 +20,7 @@
   --spouse:#ec9d89; --spouse-t:#ec9d89;
   --mom:#e6a0ba;    --mom-t:#e6a0ba;
   --decide:#b1b1e9; --decide-t:#b1b1e9;
+  --m-low:#93acd9; --m-anx:#c6aee8; --m-ang:#ef8b7b; --m-tired:#b0a898; --m-ok:#9ccb98; --m-happy:#f0c869;
   --focus:#e1ad66; --danger-wash:#2a1d1a; --success:#8fc48c; --success-wash:#1b231a; --scrim:rgba(8,7,6,.72);
   --shadow-sm:0 1px 2px rgba(0,0,0,.40); --shadow-md:0 6px 16px rgba(0,0,0,.45); --shadow-lg:0 12px 32px rgba(0,0,0,.50);
   color-scheme:dark;
@@ -34,6 +35,7 @@
   --spouse:#b75644; --spouse-t:#8f392a;
   --mom:#ad567b;    --mom-t:#863a5b;
   --decide:#6c68a9; --decide-t:#504c8a;
+  --m-low:#3d5d97; --m-anx:#6b4c9e; --m-ang:#a5382a; --m-tired:#686258; --m-ok:#3a7637; --m-happy:#86610c;
   --focus:#7d5411; --danger-wash:#f6e7e4; --success:#2f6b36; --success-wash:#e6efe5; --scrim:rgba(32,31,29,.40);
   --shadow-sm:0 1px 2px rgba(32,31,29,.08); --shadow-md:0 4px 12px rgba(32,31,29,.10); --shadow-lg:0 12px 32px rgba(32,31,29,.14);
   color-scheme:light;
@@ -47,6 +49,7 @@
     --diary:#aa732b;  --diary-t:#784e14; --friend:#298787; --friend-t:#115e5e;
     --spouse:#b75644; --spouse-t:#8f392a; --mom:#ad567b; --mom-t:#863a5b;
     --decide:#6c68a9; --decide-t:#504c8a; color-scheme:light;
+    --m-low:#3d5d97; --m-anx:#6b4c9e; --m-ang:#a5382a; --m-tired:#686258; --m-ok:#3a7637; --m-happy:#86610c;
     --focus:#7d5411; --danger-wash:#f6e7e4; --success:#2f6b36; --success-wash:#e6efe5; --scrim:rgba(32,31,29,.40);
     --shadow-sm:0 1px 2px rgba(32,31,29,.08); --shadow-md:0 4px 12px rgba(32,31,29,.10); --shadow-lg:0 12px 32px rgba(32,31,29,.14);
   }
@@ -147,6 +150,12 @@ a{color:inherit}
 .chip[aria-pressed="true"]{border:1.5px solid var(--gold);color:var(--gold-t);background:color-mix(in oklab,var(--gold) 10%,transparent)}
 .chip svg.i{width:16px;height:16px}
 .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--v)}
+/* mood chips carry their own colour dot (from the 29 Oct change, kept in the redesign) */
+.chip[data-m="Low"]{--mc:var(--m-low)} .chip[data-m="Anxious"]{--mc:var(--m-anx)} .chip[data-m="Angry"]{--mc:var(--m-ang)}
+.chip[data-m="Tired"]{--mc:var(--m-tired)} .chip[data-m="Okay"]{--mc:var(--m-ok)} .chip[data-m="Happy"]{--mc:var(--m-happy)}
+.chip[data-m] .dot{background:var(--mc)}
+.chip[data-m][aria-pressed="true"]{border-color:var(--mc);color:var(--ink);background:color-mix(in oklab,var(--mc) 18%,transparent)}
+.chip[data-m][aria-pressed="true"] svg.i{color:var(--mc)}
 .chip[data-voice="decide"] .dot{background:transparent;border:1.5px dashed var(--v)}
 .continue{color:var(--muted);font-size:15px;margin:0 0 var(--space-4)}
 
@@ -1813,7 +1822,7 @@ function renderMoods(){
   for(const [m] of MOODS){
     const b=document.createElement("button"); b.type="button"; b.className="chip"; b.dataset.m=m;
     b.setAttribute("aria-pressed", state.mood===m?"true":"false");
-    b.innerHTML=(state.mood===m?icon("check"):"")+`<span>${esc(t("moods")[m])}</span>`;
+    b.innerHTML=(state.mood===m?icon("check"):`<span class="dot"></span>`)+`<span>${esc(t("moods")[m])}</span>`;
     b.onclick=()=>{ state.mood = state.mood===m ? null : m; applyMood(); renderMoods(); const again=$$("#moods .chip").find(x=>x.dataset.m===m); if(again) again.focus(); };
     mc.appendChild(b);
   }
